@@ -14,6 +14,7 @@ interface LoginPageProps {
 }
 
 function LoginPage({ 
+  handleLogin,
   username, 
   setUsername, 
   password, 
@@ -25,21 +26,29 @@ function LoginPage({
 
    const [status, setStatus] = useState<"login" | "success">("login");
   const [error, setError] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
 
   const DEMO_USERNAME = "demo";
   const DEMO_PASSWORD = "1234"; 
 
-  const handleLogin = () => {
-    if (username === DEMO_USERNAME && password === DEMO_PASSWORD) {
-      setStatus("success"); // Go to MainMenu
-    } else {
-      setError(true); // Show error
-    }
-  };
+const handleLoginClick = () => {
+  if (username === DEMO_USERNAME && password === DEMO_PASSWORD) {
+    setError(false);
+    setSuccessMsg(true);
 
-  if (status === "success") {
-    return <MainMenu />;
+    setTimeout(() => {
+       handleLogin();
+    }, 1200);
+  } else {
+    setError(true);
+    setSuccessMsg(false);
   }
+};
+
+
+  // if (status === "success") {
+  //   return <MainMenu/>;
+  // }
 
   return (
     
@@ -51,6 +60,12 @@ function LoginPage({
                Incorrect Username or Password
             </div>
           )}
+
+          {successMsg && (
+  <div className="w-60 bg-green-700 text-white px-4 py-1.5 rounded-full text-xs font-medium text-center mb-4 ml-27">
+    Login Successful !
+  </div>
+)}
         <div className="bg-black rounded-lg p-8 sm:p-12">
           <div className="mb-[-70px]"> {/* reduced gap here */}
   <Logo />
@@ -91,7 +106,7 @@ setError(false);
             </div>
 
             <button
-              onClick={handleLogin}
+              onClick={handleLoginClick }
               className="w-30 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-full transition-colors text-xs mb-4 ml-29 font-medium"
             >
               Login
@@ -107,6 +122,26 @@ setError(false);
               />
               <label htmlFor="remember" className="text-white text-sm text-xs font-medium">Remember me</label>
             </div>
+            {error && (
+  <div className="flex items-start gap-1.5 font-semibold mt-12 text-white text-[12px] ml-20">
+    <img
+      src="/error.png"
+      alt="info"
+      className="w-2 h-5 mt-[1px]"
+    />
+      <div>
+    <p>
+      If you forget your <span className="font-semibold">USERNAME</span> or
+    </p>
+    <p>
+      <span className="font-semibold">PASSWORD</span> please contact your
+    </p>
+    <p className="text-center">
+      admin..
+    </p>
+  </div>
+  </div>
+)}
           </div>
         </div>
       </div>

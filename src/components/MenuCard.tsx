@@ -1,19 +1,29 @@
-import type { ReactNode } from 'react';
+import React from "react";
 
 interface MenuCardProps {
   title: string;
   bgColor: string;
-  icon: ReactNode;
+  icon: React.ReactNode;
+  onClick?: () => void;
 }
 
-function MenuCard({ title, bgColor, icon }: MenuCardProps) {
+function MenuCard({ title, bgColor, icon, onClick }: MenuCardProps) {
   return (
-    <button className="flex flex-col items-center p-4 sm:p-6 rounded-3xl bg-white hover:bg-gray-100 transition-colors">
-      <div className={`w-20 h-20 sm:w-24 sm:h-24 ${bgColor} rounded-full flex items-center justify-center mb-3`}>
+    <div className="flex flex-col items-center cursor-pointer" onClick={onClick}>
+      <div
+        className={`${bgColor} 
+        w-[296px] h-[276px] 
+        rounded-[100px] 
+        flex items-center justify-center 
+        shadow-lg`}
+      >
         {icon}
       </div>
-      <span className="text-black font-semibold text-sm sm:text-base">{title}</span>
-    </button>
+      
+      <p className="mt-2 text-white text-[25px] font-semibold text-center">
+        {title}
+      </p>
+    </div>
   );
 }
 

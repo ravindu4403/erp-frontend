@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import LoginPage from './pages/LoginPage';
-
 import MainMenu from './pages/MainMenu';
+import PosMainMenu from './pages/PosMainMenu';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'login' | 'error' | 'main'>('login');
+  const [currentPage, setCurrentPage] = useState<'login' | 'error' | 'main' | 'pos'>('login');
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
-  const handleLogin = (): void => {
-    if (username === 'User 01' && password === '123456') {
+  const handleLogin = () => {
+    if (username === 'demo' && password === '1234') {
       setCurrentPage('main');
     } else {
-      setCurrentPage('error');
+      alert('Incorrect username or password');
     }
   };
 
@@ -30,10 +30,14 @@ function App() {
           handleLogin={handleLogin}
         />
       )}
-     
-      {currentPage === 'main' && <MainMenu />}
-      
-    
+
+      {currentPage === 'main' && (
+        <MainMenu goToPage={(page) => setCurrentPage(page)} />
+      )}
+
+      {currentPage === 'pos' && (
+        <PosMainMenu goBack={() => setCurrentPage('main')} />
+      )}
     </div>
   );
 }
