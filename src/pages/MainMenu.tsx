@@ -1,21 +1,18 @@
-import { useState } from 'react';
-import MenuCard from '../components/MenuCard';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import MenuCard from "../components/MenuCard";
 import ViewStock from "./ViewStock";
 
 
-interface MainMenuProps {
-    goToPage: (page: 'pos' | 'main') => void;
-}
 
-
-
-function MainMenu({ goToPage }: MainMenuProps) {
-
+function MainMenu() {
+  const navigate = useNavigate();
   const [showViewStock, setShowViewStock] = useState(false);
 
   if (showViewStock) {
-  return <ViewStock goBack={() => setShowViewStock(false)} />;
-}
+    return <ViewStock goBack={() => setShowViewStock(false)} />;
+  }
+
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -65,12 +62,14 @@ function MainMenu({ goToPage }: MainMenuProps) {
   <MenuCard
     title="Point Of Sales"
     bgColor="bg-white"
+    onClick={() => navigate("/pos")}
     icon={
       <img
       src="/cashier.png"  
       alt="Point Of Sales"
       className=" h-45 object-contain mx-auto"
-       onClick={() => goToPage('pos')} 
+      onClick={() => navigate("/pos")}
+
     />
    }
 

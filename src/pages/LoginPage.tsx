@@ -1,73 +1,68 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
-import MainMenu from "./MainMenu";
+import api from "../api/axios";
 
-interface LoginPageProps {
-  username: string;
-  setUsername: (value: string) => void;
-  password: string;
-  setPassword: (value: string) => void;
-  rememberMe: boolean;
-  setRememberMe: (value: boolean) => void;
-  handleLogin: () => void;
-}
 
-function LoginPage({ 
-  handleLogin,
-  username, 
-  setUsername, 
-  password, 
-  setPassword, 
-  rememberMe, 
-  setRememberMe, 
- 
-}: LoginPageProps) {
 
-   const [status, setStatus] = useState<"login" | "success">("login");
+
+function LoginPage() {
+  const navigate = useNavigate();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
   const [error, setError] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const DEMO_USERNAME = "demo";
-  const DEMO_PASSWORD = "1234"; 
+const handleLoginClick = async () => {
+  setError(false);
+  setSuccessMsg(false);
+  setLoading(true);
 
-const handleLoginClick = () => {
-  if (username === DEMO_USERNAME && password === DEMO_PASSWORD) {
-    setError(false);
+  try {
+    const res = await api.post("/auth/login", {
+      username,
+      password,
+    });
+
+    localStorage.setItem("token", res.data.access_token);
+
     setSuccessMsg(true);
 
     setTimeout(() => {
-       handleLogin();
-    }, 1200);
-  } else {
+      navigate("/main-menu");
+    }, 800);
+
+  } catch {
     setError(true);
-    setSuccessMsg(false);
+  } finally {
+    setLoading(false);
   }
 };
 
 
-  // if (status === "success") {
-  //   return <MainMenu/>;
-  // }
 
   return (
     
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 ">
+    <div className="min-h-screen bg-black flex items-center justify-center ">
     
       <div className="w-full  max-w-md">
           {error && (
-            <div className= "w-60 bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-medium text-center mb-4 ml-27">
+            <div className= "w-80 bg-red-500 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center  ml-24">
                Incorrect Username or Password
             </div>
           )}
 
           {successMsg && (
-  <div className="w-60 bg-green-700 text-white px-4 py-1.5 rounded-full text-xs font-medium text-center mb-4 ml-27">
+  <div className="w-80 bg-green-700 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center ml-24">
     Login Successful !
   </div>
 )}
         <div className="bg-black rounded-lg p-8 sm:p-12">
-          <div className="mb-[-70px]"> {/* reduced gap here */}
+          <div className="mb-[-100px]"> {/* reduced gap here */}
   <Logo />
 </div>
 
@@ -76,7 +71,7 @@ const handleLoginClick = () => {
 
           <div>
             <div className="mb-6">
-              <label className="block text-white text-sm mb-1 ml-2 text-xs font-medium">User Name *</label>
+              <label className="block text-white text-sm mb-1 ml-2 text-[20px] font-medium">User Name *</label>
               <input
                 type="text"
                 value={username}
@@ -85,21 +80,21 @@ const handleLoginClick = () => {
                    setError(false);
                 }}
                 
-                 className={`w-full px-5 py-1.5 rounded-full text-black focus:outline-none ${
+                 className={`w-[400px] px-5 py-3 rounded-full text-black items-center justify-center focus:outline-none ${
     error ? "bg-red-100 border-2 border-red-500" : "bg-white"
   }`}
 />
             </div>
 
             <div className="mb-15">
-              <label className="block text-white text-sm mb-1 ml-2 text-xs font-medium">Password *</label>
+              <label className="block text-white text-[20px] mb-1 ml-2 text-xs font-medium">Password *</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value);
 setError(false); 
                 }}
-                className={`w-full px-5 py-1.5 rounded-full text-black focus:outline-none ${
+                className={`w-[400px] px-5 py-3 rounded-full text-black items-center justify-center focus:outline-none ${
     error ? "bg-red-100 border-2 border-red-500" : "bg-white"
   }`}
   />
@@ -107,39 +102,34 @@ setError(false);
 
             <button
               onClick={handleLoginClick }
-              className="w-30 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-full transition-colors text-xs mb-4 ml-29 font-medium"
+              className="w-40 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-full transition-colors text-[20px] mb-4 ml-29 font-medium"
             >
               Login
             </button>
 
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center ml-7 ">
               <input
                 type="checkbox"
                 id="remember"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="mr-2"
+                className="mr-2 "
               />
-              <label htmlFor="remember" className="text-white text-sm text-xs font-medium">Remember me</label>
+              <label htmlFor="remember" className="text-white text-[18px] font-medium">Remember me</label>
             </div>
             {error && (
-  <div className="flex items-start gap-1.5 font-semibold mt-12 text-white text-[12px] ml-20">
+  <div className="flex items-start gap-0.5 font-semibold mt-12 text-white text-[15px] ml-6">
     <img
       src="/error.png"
       alt="info"
-      className="w-2 h-5 mt-[1px]"
+      className="w-2 h-8 "
     />
-      <div>
-    <p>
-      If you forget your <span className="font-semibold">USERNAME</span> or
-    </p>
-    <p>
-      <span className="font-semibold">PASSWORD</span> please contact your
-    </p>
-    <p className="text-center">
-      admin..
-    </p>
-  </div>
+     <p className="text-white text-[15px] font-semibold text-center">
+  If you forget your <span className="font-semibold">USERNAME</span> or{" "}
+  <span className="font-semibold">PASSWORD</span> please contact your <br></br>
+  <span className="text-center">admin..</span> 
+</p>
+
   </div>
 )}
           </div>

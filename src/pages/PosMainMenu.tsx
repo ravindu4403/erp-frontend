@@ -1,24 +1,22 @@
-import { useState } from 'react';
-import CreateInvoice from './CreateInvoice';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CreateInvoice from "./CreateInvoice";
 import CreateEditCustomer from "./CreateEditCustomer";
-import ViewPreviousInvoice from './ViewPreviousInvoice';
+import ViewPreviousInvoice from "./ViewPreviousInvoice";
 
-interface PosMainMenuProps {
-  goBack: () => void;
-}
+const PosMainMenu = () => {
+  const navigate = useNavigate();
 
-const PosMainMenu = ({ goBack }: PosMainMenuProps) => {
-
-     const [showCreateInvoice, setShowCreateInvoice] = useState(false);
-     const [showCreateCustomer, setShowCreateCustomer] = useState(false);
-     const [showViewInvoice, setShowViewInvoice] = useState(false);
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  const [showViewInvoice, setShowViewInvoice] = useState(false);
 
   if (showCreateInvoice) {
     return <CreateInvoice goBack={() => setShowCreateInvoice(false)} />;
   }
 
   if (showCreateCustomer) {
-  return <CreateEditCustomer goBack={() => setShowCreateCustomer(false)} />;
+    return <CreateEditCustomer goBack={() => setShowCreateCustomer(false)} />;
   }
 
   if (showViewInvoice) {
@@ -29,25 +27,25 @@ const PosMainMenu = ({ goBack }: PosMainMenuProps) => {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 ">
       
       {/* Top Bar */}
-      <div className="w-full max-w-md bg-gray-200 rounded-full flex items-center justify-between px-4 py-2 mb-8">
+      <div className="w-[500px]  bg-gray-200 rounded-full flex items-center justify-between px-4 py-3 mb-8">
        <button
-  onClick={goBack}
-  className="flex items-center gap-2 text-sm font-medium"
+  onClick={() => navigate("/main-menu")}
+  className="flex items-center gap-2 text-[17px]"
 >
   <img
     src="/Polygon.png"
     alt="Back"
-    className="w-4 h-4"
+    className="w-6 h-6"
   />
   Main menu
 </button>
-        <span className="font-bold text-[18px]">POS</span>
-       <button className="flex items-center gap-2 text-sm font-medium">
+        <span className="font-bold text-[25px]">POS</span>
+       <button className="flex items-center gap-2 text-[17px]">
   Main menu
   <img
     src="/Polygon 2.png"
     alt="Next"
-    className="w-4 h-4"
+    className="w-6 h-6"
   />
 </button>
       </div>
