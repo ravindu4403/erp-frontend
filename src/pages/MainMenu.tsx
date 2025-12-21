@@ -7,6 +7,7 @@ import ViewStock from "./ViewStock";
 
 function MainMenu() {
   const [username, setUsername] = useState<string | null>(null);
+    const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const [showViewStock, setShowViewStock] = useState(false);
 
@@ -18,7 +19,18 @@ function MainMenu() {
     // If no username, redirect back to login
     navigate("/login");
   }
-}, [navigate]);
+
+
+ const loginSuccess = localStorage.getItem("loginSuccess");
+    if (loginSuccess === "true") {
+      setShowSuccess(true);
+      localStorage.removeItem("loginSuccess"); // clear the flag
+
+      // hide after 3 seconds
+      setTimeout(() => setShowSuccess(false), 5000);
+    }
+  }, [navigate]);
+
 
   
   if (showViewStock) {
@@ -31,7 +43,11 @@ function MainMenu() {
       <div className="w-full max-w-md">
         <div className="bg-black rounded-lg p-8 ">
           <div className="flex justify-center mb-6">
-           
+             {showSuccess && (
+          <div className="w-80 bg-green-700 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center mb-4 mx-auto">
+            Login Successful!
+          </div>
+        )}
           </div>
 {username && (
   <h2 className="text-white text-2xl sm:text-3xl font-bold text-center mb-10">

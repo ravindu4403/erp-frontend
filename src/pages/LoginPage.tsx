@@ -30,6 +30,7 @@ function LoginPage() {
       const res = await api.post("/auth/login", { username, password });
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("username", username);
+      localStorage.setItem("loginSuccess", "true");
 
       setSuccessMsg(true);
       setLoading(false);
@@ -37,7 +38,7 @@ function LoginPage() {
 
       setTimeout(() => {
         navigate("/main-menu");
-      }, 1500);
+      }, 1000);
     } catch {
       setError(true);
       setLoading(false);
