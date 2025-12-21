@@ -16,7 +16,7 @@ const PosMainMenu = () => {
   if (showViewInvoice) return <ViewPreviousInvoice goBack={() => setShowViewInvoice(false)} />;
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center px-4 py-6">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-6">
       {/* Top Bar */}
       <div className="w-full max-w-[500px] bg-gray-200 rounded-full flex items-center justify-between px-4 py-3 mb-6">
         <button
