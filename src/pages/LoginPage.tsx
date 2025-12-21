@@ -46,12 +46,12 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center relative">
+    <div className="min-h-screen bg-black flex item-center justify-center   relative">
       {showRedirectLoader && <Loader fullScreen={true} />}
       
       <div className="w-full max-w-md">
         {error && (
-          <div className="w-80 bg-red-500 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center mt-1 ml-24">
+          <div className="w-80 bg-red-500 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center  mt-4 ml-24">
             Incorrect Username or Password
           </div>
         )}
@@ -61,7 +61,7 @@ function LoginPage() {
           </div>
         )}
 
-        <div className="bg-black rounded-lg p-8 sm:p-12">
+        <div className="bg-black rounded-lg  sm:p-12">
           <div className="mb-[-100px]">
             <Logo />
           </div>
@@ -69,7 +69,7 @@ function LoginPage() {
           {/* ✅ Single form wrapping all inputs */}
           <form onSubmit={handleLogin}>
             <div className="mb-6">
-              <label className="block text-white text-sm mb-1 ml-2 text-[20px] font-medium">
+              <label className="block text-white mb-1 ml-2 text-[20px] font-medium">
                 User Name *
               </label>
               <input
