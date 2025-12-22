@@ -18,7 +18,7 @@ const PosMainMenu = () => {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-6">
       {/* Top Bar */}
-      <div className="w-full max-w-[500px] bg-gray-200 rounded-full flex items-center justify-between px-4 py-3 mb-6">
+      <div className="w-full max-w-[400px] bg-gray-200 rounded-full flex items-center justify-between px-4 py-2.5 mb-6">
         <button
           onClick={() => navigate("/main-menu")}
           className="flex items-center gap-2 text-[16px] sm:text-[17px]"
@@ -34,50 +34,50 @@ const PosMainMenu = () => {
       </div>
 
       {/* Buttons Container */}
-      <div className="w-full max-w-[450px] flex flex-col gap-4 sm:gap-6">
+      <div className="w-full max-w-[420px] flex flex-col gap-4 sm:gap-6">
 
         {/* Create Invoice */}
         <button
           onClick={() => setShowCreateInvoice(true)}
-          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[80px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#7D77ED] via-[#251DCC] to-[#191388] h-auto sm:h-50"
+          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[70px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#7D77ED] via-[#251DCC] to-[#191388] h-auto sm:h-40"
         >
           <div className="text-left mb-2 sm:mb-0 sm:ml-6">
-            <h2 className="text-xl sm:text-3xl font-bold leading-snug">
+            <h2 className="text-xl sm:text-2xl font-bold leading-snug">
               Create<br />New<br />Invoice
             </h2>
           </div>
           <div className="text-4xl sm:text-5xl">
-            <img src="/mdi_invoice-text-plus.png" alt="Create Invoice" className="w-20 h-20 sm:w-30 sm:h-30" />
+            <img src="/mdi_invoice-text-plus.png" alt="Create Invoice" className="w-20 h-20 sm:w-25 sm:h-25 " />
           </div>
         </button>
 
         {/* View Previous Invoice */}
         <button
           onClick={() => setShowViewInvoice(true)}
-          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[80px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#9EF6A5] via-[#1B8C21] to-[#022003] h-auto sm:h-50"
+          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[70px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#9EF6A5] via-[#1B8C21] to-[#022003] h-auto sm:h-40"
         >
           <div className="text-left mb-2 sm:mb-0 sm:ml-6">
-            <h2 className="text-xl sm:text-3xl font-bold leading-snug">
+            <h2 className="text-xl sm:text-2xl font-bold leading-snug">
               View<br />Previous<br />Invoice
             </h2>
           </div>
           <div className="text-4xl sm:text-5xl">
-            <img src="/mdi_invoice-clock.png" alt="View Invoice" className="w-20 h-20 sm:w-30 sm:h-30" />
+            <img src="/mdi_invoice-clock.png" alt="View Invoice" className="w-20 h-20 sm:w-25 sm:h-25" />
           </div>
         </button>
 
         {/* Create / Edit Customer */}
         <button
           onClick={() => setShowCreateCustomer(true)}
-          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[80px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#F6ED9E] via-[#868C1B] to-[#1A2002] h-auto sm:h-50"
+          className="flex flex-col sm:flex-row items-center justify-between rounded-3xl sm:rounded-[70px] p-4 sm:p-6 text-white bg-gradient-to-b from-[#F6ED9E] via-[#868C1B] to-[#1A2002] h-auto sm:h-40"
         >
           <div className="text-left mb-2 sm:mb-0 sm:ml-6">
-            <h2 className="text-xl sm:text-3xl font-bold leading-snug">
+            <h2 className="text-xl sm:text-2xl font-bold leading-snug">
               Create /<br />Edit<br />Customer
             </h2>
           </div>
-          <div className="text-4xl sm:text-5xl">
-            <img src="/mdi_user-add.png" alt="Create Customer" className="w-20 h-20 sm:w-30 sm:h-30" />
+          <div className="text-4xl sm:text-5xl ">
+            <img src="/mdi_user-add.png" alt="Create Customer" className="w-20 h-20 sm:w-25 sm:h-25" />
           </div>
         </button>
 

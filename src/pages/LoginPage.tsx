@@ -25,9 +25,9 @@ function LoginPage() {
     setError(false);
     setSuccessMsg(false);
     setLoading(true);
-
+``
     try {
-      const res = await api.post("/auth/login", { username, password });
+      const res = await api.post("/api/auth/login", { username, password });
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("username", username);
       localStorage.setItem("loginSuccess", "true");

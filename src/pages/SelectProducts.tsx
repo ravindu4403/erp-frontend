@@ -12,20 +12,24 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
       />
 
       {/* MODAL - Same size as other modals */}
-      <div className="relative w-full max-w-2xl lg:max-w-4xl bg-[#D9D9D9] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl">
+      <div className="relative w-full max-w-2xl lg:max-w-4xl bg-[#D9D9D9] rounded-xl sm:rounded-xl p-4 sm:p-6 shadow-2xl">
 
         {/* SEARCH - Same as other modals */}
-        <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
-          <span className="mr-2 sm:mr-3 text-lg sm:text-xl">🔍</span>
-          <input
-            type="text"
-            placeholder="Search Products..."
-            className="w-full outline-none text-sm sm:text-base bg-transparent placeholder:text-gray-500"
-          />
-        </div>
+     <div className="flex items-center bg-white rounded-[12px] px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
+  <img
+    src="./search-products.png"
+    alt="Search"
+    className="mr-2 sm:mr-3 w-5 h-5 sm:w-6 sm:h-6"
+  />
+  <input
+    type="text"
+    placeholder="Search Products..."
+    className="w-full outline-none text-sm sm:text-base bg-transparent placeholder:text-gray-500"
+  />
+</div>
 
         {/* TABLE - Same height as other modals */}
-        <div className="bg-[#4B4B4B] rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6">
+        <div className="bg-[#A0A0A0] rounded-xl sm:rounded-xl overflow-hidden ">
           {/* HEADER */}
           <div className="grid grid-cols-5 bg-[#2F2F2F] text-xs sm:text-sm font-semibold text-white px-3 sm:px-4 py-3 sm:py-4">
             <div className="text-center sm:text-left">#</div>
@@ -41,7 +45,7 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
               <div
                 key={i}
                 className={`grid grid-cols-5 text-xs sm:text-sm px-3 sm:px-4 py-3 sm:py-4 border-b border-white/10 hover:bg-white/10 transition-colors ${
-                  i === 2 ? "bg-[#3F5FA9]" : ""
+                  i === 2 ? "bg-[#7A9FD6]" : ""
                 }`}
               >
                 <div className="text-center sm:text-left">{i}</div>
@@ -61,7 +65,7 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
         </div>
 
         {/* PAGINATION - Same as other modals */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex items-center mt-2">
           <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black">
             ◀
           </button>
@@ -74,80 +78,78 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
         </div>
 
         {/* FORM - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base mb-4 sm:mb-6">
+ <div className="flex flex-col items-end ">
 
-          {/* Selected Product */}
-          <div className="col-span-1 sm:col-span-2 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">Selected:</span>
-                <span className="text-blue-700 font-bold text-sm sm:text-base">TYP7896</span>
-              </div>
-              <div className="flex-1 flex items-center gap-2">
-                <span className="font-semibold whitespace-nowrap">Quantity:</span>
-                <input
-                  type="text"
-                  placeholder="Add quantity"
-                  className="w-full sm:w-auto flex-1 sm:flex-none sm:w-32 px-3 sm:px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
+  {/* Selected Product */}
+  <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4 ">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 ">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold">Selected :</span>
+        <span className="text-blue-700 font-bold text-sm sm:text-base">TYP7896</span>
+      </div>
+      <div className="flex-1 flex items-center gap-2">
+        <input
+          type="text"
+          placeholder="Add quantity"
+          className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  </div>
 
-          {/* Wholesale Price */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <label className="font-semibold mb-2 block">Wholesale Price</label>
-            <div className="flex items-center">
-              <span className="mr-2">$</span>
-              <input
-                type="text"
-                value="12,500"
-                className="w-full px-3 sm:px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+  {/* Wholesale Price */}
+  <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-[-20px]">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold">Wholesale Price :</span>
+      </div>
+      <div className="flex-1 flex items-center gap-2">
+        <input
+          type="text"
+          className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  </div>
 
-          {/* Selling Price */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <label className="font-semibold mb-2 block">Selling Price</label>
-            <div className="flex items-center">
-              <span className="mr-2">$</span>
-              <input
-                type="text"
-                value="12,500"
-                className="w-full px-3 sm:px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
+  {/* Selling Price */}
+  <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-[-20px]">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold">Selling Price :</span>
+      </div>
+      <div className="flex-1 flex items-center gap-2">
+        <input
+          type="text"
+          className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  </div>
+
+</div>
+
 
         {/* FOOTER - Same layout as other modals */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
           {/* Title - Same style as other modals */}
           <div className="text-center sm:text-left">
-            <div className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text">
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-transparent">
-                Select Products
-              </span>
-            </div>
+           
           </div>
-
+ 
           {/* Action Buttons - Same as other modals */}
-          <div className="flex gap-3 sm:gap-4">
-            <button
-              onClick={onClose}
-              className="px-5 sm:px-6 h-9 sm:h-11 bg-gradient-to-b from-gray-400 to-gray-600 text-white rounded-full font-medium text-sm sm:text-base hover:opacity-90 transition-opacity"
-            >
-              Cancel
-            </button>
+          <div className="flex gap-3 sm:gap-4 mt-5">
+           
             <button className="px-6 sm:px-8 h-9 sm:h-11 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium text-sm sm:text-base hover:from-[#0E8A2A] hover:to-[#065C18] transition-all flex items-center gap-2">
-              <span>ADD PRODUCT</span>
-              <span className="text-lg">+</span>
+              <span>ADD </span>
+              
             </button>
           </div>
         </div>
       </div>
     </div>
+    
+  
   );
 };
 
