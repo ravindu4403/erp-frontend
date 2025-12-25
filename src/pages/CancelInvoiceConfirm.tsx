@@ -23,7 +23,7 @@ const SendInvoiceConfirm = ({
         <div className="text-[20px] sm:text-[24px] md:text-[28px] font-bold text-gray-700 leading-tight">
           Do You Want to
           <br />
-          <span className="text-black">Send Invoice?</span>
+          <span className="text-black">Cancel Invoice?</span>
         </div>
 
         {/* BUTTONS - Same responsive sizing */}
