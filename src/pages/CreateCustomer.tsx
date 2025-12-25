@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createCustomer } from "../api/customers";
 
+// Props for create customer modal
 interface CreateCustomerProps {
   onClose: () => void;
   onCreated?: (customer: any) => void;
@@ -10,6 +11,7 @@ interface CreateCustomerProps {
 const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
   const [loading, setLoading] = useState(false);
 
+    // Form state
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -19,12 +21,14 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
     description: "",
   });
 
+    // Handle input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+    // Submit form data
   const handleSubmit = async () => {
     if (!form.firstName || !form.lastName) {
       alert("First name and last name are required");
@@ -36,7 +40,7 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
 
       const res = await createCustomer(form);
 
-      // ✅ pass created customer back
+    // Send created customer to parent
       onCreated?.(res.data);
 
       onClose();

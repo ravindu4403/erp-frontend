@@ -7,10 +7,12 @@ import ViewPreviousInvoice from "./ViewPreviousInvoice";
 const PosMainMenu = () => {
   const navigate = useNavigate();
 
+   // States to control which component/modal to show
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [showViewInvoice, setShowViewInvoice] = useState(false);
 
+   // Conditional rendering based on which action is chosen
   if (showCreateInvoice) return <CreateInvoice goBack={() => setShowCreateInvoice(false)} />;
   if (showCreateCustomer) return <CreateEditCustomer goBack={() => setShowCreateCustomer(false)} />;
   if (showViewInvoice) return <ViewPreviousInvoice goBack={() => setShowViewInvoice(false)} />;

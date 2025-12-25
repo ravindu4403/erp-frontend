@@ -1,5 +1,5 @@
 interface SelectProductsProps {
-  onClose: () => void;
+  onClose: () => void; // Function called to close the modal
 }
 
 const SelectProducts = ({ onClose }: SelectProductsProps) => {

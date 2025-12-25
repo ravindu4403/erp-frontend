@@ -2,13 +2,14 @@ import { useState } from "react";
 import RecallInvoiceConfirm from "./RecallInvoiceConfirm";
 
 interface ViewPreviousInvoiceProps {
-  goBack: () => void;
+  goBack: () => void; // Function to navigate back to POS main menu
 }
 
 const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
-
+// State to show/hide recall confirmation modal
   const [showRecallConfirm, setShowRecallConfirm] = useState(false);
-
+ 
+   // Function called when user confirms recalling the invoice
   const handleRecall = () => {
     console.log("Invoice recalled");
     setShowRecallConfirm(false);

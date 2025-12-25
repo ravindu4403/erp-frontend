@@ -1,11 +1,13 @@
 import React from 'react';
 
+// Props for Loader component
 interface LoaderProps {
   size?: 'small' | 'medium' | 'large';
   color?: 'white' | 'blue';
   fullScreen?: boolean;
 }
 
+// Loader component
 const Loader: React.FC<LoaderProps> = ({
   size = 'medium',
   color = 'white',
@@ -16,7 +18,8 @@ const Loader: React.FC<LoaderProps> = ({
     medium: 'w-12 h-12',
     large: 'w-16 h-16',
   };
-
+ 
+  // Loader spinner UI
   const loader = (
     <div
       className={`${sizeClasses[size]} border-4 ${color === 'white' ? 'border-white' : 'border-blue-500'

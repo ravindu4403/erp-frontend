@@ -7,6 +7,8 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 
+
+// Props for CreateInvoice
 interface CreateInvoiceProps {
   goBack: () => void;
 }
@@ -18,8 +20,11 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
+   // Selected customer
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  
+  // Quantity state
   const [qty, setQty] = useState(25);
   const increaseQty = () => setQty(qty + 1);
   const decreaseQty = () => qty > 0 && setQty(qty - 1);

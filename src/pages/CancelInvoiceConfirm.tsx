@@ -1,8 +1,11 @@
+
+// Props for confirmation modal
 interface SendInvoiceConfirmProps {
   onConfirm: () => void;
   onClose: () => void;
 }
 
+// Send invoice confirmation modal
 const SendInvoiceConfirm = ({
   onConfirm,
   onClose,

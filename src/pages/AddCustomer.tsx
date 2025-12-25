@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getCustomers } from "../api/customers";
 import type { Customer } from "../api/customers";
 
+// Props for AddCustomer modal
 interface AddCustomerProps {
   onClose: () => void;
   onSelect: (customer: Customer) => void;
@@ -12,9 +13,9 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Customer | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  
 
+// Fetch customers from API
   const loadCustomers = async () => {
     try {
       setLoading(true);
@@ -28,10 +29,12 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
     }
   };
 
+  // Load customers on component mount
   useEffect(() => {
     loadCustomers();
   }, []);
 
+  // Reload customers when search changes
   useEffect(() => {
     const delay = setTimeout(loadCustomers, 400);
     return () => clearTimeout(delay);

@@ -1,5 +1,5 @@
 interface RecallInvoiceProps {
-  onClose: () => void;
+  onClose: () => void; // Function to close the modal
 }
 
 const RecallInvoice = ({ onClose }: RecallInvoiceProps) => {
@@ -81,9 +81,6 @@ const RecallInvoice = ({ onClose }: RecallInvoiceProps) => {
             </button>
           </div>
         </div>
-
-        {/* TITLE */}
-
       </div>
     </div>
   );

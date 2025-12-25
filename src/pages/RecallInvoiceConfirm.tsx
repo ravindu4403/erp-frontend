@@ -1,6 +1,6 @@
 interface RecallInvoiceConfirmProps {
-  onConfirm: () => void;
-  onClose: () => void;
+  onConfirm: () => void;  // Function called when user confirms recall
+  onClose: () => void;    // Function called when user cancels/closes modal
 }
 
 const RecallInvoiceConfirm = ({

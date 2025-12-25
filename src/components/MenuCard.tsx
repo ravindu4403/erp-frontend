@@ -1,5 +1,6 @@
 import React from "react";
 
+// Props for MenuCard component
 interface MenuCardProps {
   title: string;
   bgColor: string;
@@ -7,6 +8,7 @@ interface MenuCardProps {
   onClick?: () => void;
 }
 
+// MenuCard component
 function MenuCard({ title, bgColor, icon, onClick }: MenuCardProps) {
   return (
     <div className="flex flex-col items-center cursor-pointer" onClick={onClick}>

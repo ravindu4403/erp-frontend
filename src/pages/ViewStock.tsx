@@ -1,5 +1,5 @@
 interface ViewStockProps {
-  goBack: () => void;
+  goBack: () => void; // Function to navigate back to the main menu
 }
 
 const ViewStock = ({ goBack }: ViewStockProps) => {

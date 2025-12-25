@@ -1,6 +1,6 @@
 interface SendInvoiceConfirmProps {
-  onConfirm: () => void;
-  onClose: () => void;
+  onConfirm: () => void; // Function called when user confirms sending the invoice
+  onClose: () => void;  // Function called when user cancels or closes the modal
 }
 
 const SendInvoiceConfirm = ({

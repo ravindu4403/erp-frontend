@@ -4,38 +4,28 @@ import MenuCard from "../components/MenuCard";
 import ViewStock from "./ViewStock";
 
 
-
 function MainMenu() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const navigate = useNavigate();
   const [showViewStock, setShowViewStock] = useState(false);
 
+
   useEffect(() => {
+    // Get username from localStorage (already verified by ProtectedRoute)
     const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUsername(storedUsername);
-    } else {
-      // If no username, redirect back to login
-      navigate("/login");
-    }
+    setUsername(storedUsername);
 
-
+    // Show login success message only once
     const loginSuccess = localStorage.getItem("loginSuccess");
     if (loginSuccess === "true") {
       setShowSuccess(true);
-      localStorage.removeItem("loginSuccess"); // clear the flag
-
-      // hide after 3 seconds
-      setTimeout(() => setShowSuccess(false), 5000);
+      localStorage.removeItem("loginSuccess");
+      setTimeout(() => setShowSuccess(false), 4000);
     }
-  }, [navigate]);
+  }, []);
 
-
-
-  if (showViewStock) {
-    return <ViewStock goBack={() => setShowViewStock(false)} />;
-  }
+  if (showViewStock) return <ViewStock goBack={() => setShowViewStock(false)} />;
 
 
   return (

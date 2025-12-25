@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Loader from '../components/Loader';
@@ -6,7 +6,6 @@ import api from "../api/axios";
 
 function LoginPage() {
   const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -15,8 +14,14 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showRedirectLoader, setShowRedirectLoader] = useState(false);
 
+  // Clear session on login page load
+  useEffect(() => {
+    sessionStorage.removeItem("isAuthenticated");
+  }, []);
+
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
     if (!username || !password) {
       setError(true);
       return;
@@ -25,12 +30,17 @@ function LoginPage() {
     setError(false);
     setSuccessMsg(false);
     setLoading(true);
-    ``
+    
     try {
       const res = await api.post("/auth/login", { username, password });
+
+      // Save auth data
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("username", username);
       localStorage.setItem("loginSuccess", "true");
+      
+      // IMPORTANT: Set session authentication flag
+      sessionStorage.setItem("isAuthenticated", "true");
 
       setSuccessMsg(true);
       setLoading(false);
@@ -45,8 +55,9 @@ function LoginPage() {
     }
   };
 
+
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center ml-[-50px] ">
+    <div className="min-h-screen bg-black flex items-center justify-center ">
       {showRedirectLoader && <Loader fullScreen={true} />}
 
       <div className="w-full max-w-md">
@@ -66,9 +77,9 @@ function LoginPage() {
             <Logo />
           </div>
 
-          {/* ✅ Single form wrapping all inputs */}
+          {/* Single form wrapping all inputs */}
           <form onSubmit={handleLogin}>
-            <div className="mb-6">
+            <div className="mb-4 ">
               <label className="block text-white mb-1 ml-2 text-[20px] font-medium">
                 User Name *
               </label>
@@ -97,7 +108,7 @@ function LoginPage() {
             </div>
 
             <button
-              type="submit" // ✅ Enter key works with submit button
+              type="submit" // Enter key works with submit button
               disabled={loading || showRedirectLoader}
               className={`w-40 bg-blue-500 text-white font-medium py-3 rounded-full transition-colors text-[20px] mb-4 ml-29 flex items-center justify-center ${loading || showRedirectLoader ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
                 }`}

@@ -1,16 +1,14 @@
 import { useState } from "react";
 
+// Props for Create/Edit Customer page
 interface CreateEditCustomerProps {
   goBack: () => void;
 }
 
 const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
 
-
-
-
-
-  const [form] = useState({
+   // Customer form state
+ const [form] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -133,7 +131,7 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
           />
         </div>
 
-        {/* ADD Button */}
+        {/* ADD Button  */}
         <button className="w-24 sm:w-32 h-9 sm:h-12 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium text-sm sm:text-base ml-auto block hover:from-[#0E8A2A] hover:to-[#065C18] transition-all">
           ADD
         </button>
