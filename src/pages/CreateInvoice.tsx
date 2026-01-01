@@ -13,6 +13,9 @@ interface CreateInvoiceProps {
   goBack: () => void;
 }
 
+const totalItems = 20;      // total data count
+const itemsPerPage = 10;
+
 const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [showRecall, setShowRecall] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -21,6 +24,10 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [showProducts, setShowProducts] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
    // Selected customer
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
@@ -28,6 +35,18 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [qty, setQty] = useState(25);
   const increaseQty = () => setQty(qty + 1);
   const decreaseQty = () => qty > 0 && setQty(qty - 1);
+
+  const prevPage = () => {
+  if (currentPage > 1) {
+    setCurrentPage((prev) => prev - 1);
+  }
+};
+
+const nextPage = () => {
+  if (currentPage < totalPages) {
+    setCurrentPage((prev) => prev + 1);
+  }
+};
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5">
@@ -232,17 +251,36 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
         </div>
 
-        <div className="w-full max-w-2xl flex   text-sm sm:text-base text-white/80  ml-12">
-          <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center  ounded-full">
-            ◀
-          </button>
-          <span className="font-medium my-2">
-            Page <span className="font-bold">2</span> of <span className="font-bold">2</span>
-          </span>
-          <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center   rounded-full">
-            ▶
-          </button>
-        </div>
+    <div className="w-full max-w-2xl flex items-center gap-4 text-sm sm:text-base text-white/80 ml-12">
+      
+      {/* PREVIOUS */}
+      <button
+        onClick={prevPage}
+        disabled={currentPage === 1}
+        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
+                   disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+      >
+        ◀
+      </button>
+
+      {/* PAGE INFO */}
+      <span className="font-medium">
+        Page <span className="font-bold">{currentPage}</span> of{" "}
+        <span className="font-bold">{totalPages}</span>
+      </span>
+
+      {/* NEXT */}
+      <button
+        onClick={nextPage}
+        disabled={currentPage === totalPages}
+        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
+                   disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+      >
+        ▶
+      </button>
+    </div>
+  
+
         {/* SEND TO CASHIER BUTTON */}
         <button
           onClick={() => setShowSendConfirm(true)}
