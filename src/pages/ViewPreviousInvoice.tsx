@@ -24,6 +24,9 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
 
+
+  
+
   // Load invoices from API
   useEffect(() => {
     const loadInvoices = async () => {

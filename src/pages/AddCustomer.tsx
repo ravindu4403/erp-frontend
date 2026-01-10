@@ -1,19 +1,10 @@
 import { useEffect, useState } from "react";
-import { getCustomers} from "../api/customers";
+import { getCustomers, type Customer } from "../api/customers";
 
 // Props for AddCustomer modal
 interface AddCustomerProps {
   onClose: () => void;
   onSelect: (customer: Customer) => void;
-}
-
-export interface Customer {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  address?: string;
-  description?: string;
 }
 
 const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
@@ -23,70 +14,59 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
   const [selected, setSelected] = useState<Customer | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
-  // Fetch customers from API
-const loadCustomers = async () => {
-  try {
-    setLoading(true);
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      const res = await getCustomers(currentPage, 10);
 
-    const res = await getCustomers(currentPage, 10);
+      // No need to rename fields; just use API fields directly
+      const mapped: Customer[] = res.data.data.map((c: any) => ({
+        id: c.id,
+        first_name: c.first_name,
+        middle_name: c.middle_name,
+        last_name: c.last_name,
+        address: c.address,
+        telephone: c.telephone,
+        description: c.description,
+        added_by: c.added_by,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+      }));
 
-    const mapped = res.data.data.map((c: any) => ({
-      id: c.id,
-      firstName: c.first_name,
-      lastName: c.last_name,
-      phone: c.telephone,
-      address: c.address,
-      description: c.description,
-    }));
+      setCustomers(mapped);
+      setTotalPages(Math.ceil(res.data.total / res.data.limit));
+    } catch (e) {
+      console.error("Error loading customers:", e);
+      alert("Failed to load customers");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setCustomers(mapped);
-    setTotalPages(Math.ceil(res.data.total / res.data.limit));
-
-  } catch (e) {
-    console.error("Error loading customers:", e);
-    alert("Failed to load customers");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // SEARCH DELAY with page reset
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
     const delay = setTimeout(loadCustomers, 400);
     return () => clearTimeout(delay);
   }, [search]);
 
-  // Load customers when page changes
   useEffect(() => {
     loadCustomers();
   }, [currentPage]);
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
   };
 
   const handleSelect = () => {
     if (selected) {
-      onSelect(selected);
-      onClose(); // Close modal after selection
+      onSelect(selected); // Now this matches API Customer type
+      onClose();
     }
-  };
-
-  // Calculate starting index for numbering
-  const getItemNumber = (index: number) => {
-    return index + 1 + (currentPage - 1) * 10;
   };
 
   return (
@@ -154,25 +134,15 @@ const loadCustomers = async () => {
                 className={`grid grid-cols-5 text-xs sm:text-sm cursor-pointer
                   ${selected?.id === c.id ? "bg-green-300" : "hover:bg-white/40"}`}
               >
-                <div className="p-3 border-r border-b border-black/20 text-center sm:text-left">
+               <div className="p-3 border-r border-b border-black/20 text-center sm:text-left">
                   {i + 1 + (currentPage - 1) * 10}
                 </div>
-
                 <div className="p-3 border-r border-b border-black/20">
-                  {c.firstName} {c.lastName}
+                  {c.first_name} {c.last_name}
                 </div>
-
-                <div className="p-3 border-r border-b border-black/20">
-                  {c.address || "-"}
-                </div>
-
-                <div className="p-3 border-r border-b border-black/20">
-                  {c.phone || "-"}
-                </div>
-
-                <div className="p-3 border-b border-black-20 truncate">
-                  {c.description || "-"}
-                </div>
+                <div className="p-3 border-r border-b border-black/20">{c.address || "-"}</div>
+                <div className="p-3 border-r border-b border-black/20">{c.telephone || "-"}</div>
+                <div className="p-3 border-b border-black/20 truncate">{c.description || "-"}</div>
               </div>
             ))}
           </div>

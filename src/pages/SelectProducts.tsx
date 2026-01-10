@@ -3,6 +3,7 @@ import { getItems } from "../api/items";
 
 interface SelectProductsProps {
   onClose: () => void;
+  onAdd: (product: any) => void;
 }
 
 interface Item {
@@ -16,10 +17,14 @@ interface Item {
   created_at: string;
 }
 
-const SelectProducts = ({ onClose }: SelectProductsProps) => {
+const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [quantity, setQuantity] = useState<string>("1");
+  const [wholesalePrice, setWholesalePrice] = useState<string>("");
+  const [sellingPrice, setSellingPrice] = useState<string>("");
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -30,7 +35,6 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
         if (Array.isArray(res.data)) {
           setItems(res.data);
         } else if (res.data.data && Array.isArray(res.data.data)) {
-          // If API wraps in `data`
           setItems(res.data.data);
         } else {
           setItems([]);
@@ -45,6 +49,44 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
 
     fetchItems();
   }, [search]);
+
+  const handleItemSelect = (item: Item) => {
+    setSelectedItem(item);
+    // Set default selling price (you can adjust this logic)
+    const price = Math.random() * 100 + 10; // Random price for demo
+    setSellingPrice(price.toFixed(2));
+  };
+
+  const handleAddToInvoice = () => {
+    if (!selectedItem) {
+      alert("Please select an item first");
+      return;
+    }
+
+    const qty = parseInt(quantity) || 1;
+    const price = parseFloat(sellingPrice) || 0;
+
+    const product = {
+      id: selectedItem.id,
+      sku: selectedItem.sku,
+      name: selectedItem.name,
+      description: selectedItem.description,
+      unitPrice: price,
+      qty: qty
+    };
+
+    // Call the parent's onAdd function
+    onAdd(product);
+    
+    // Reset form
+    setSelectedItem(null);
+    setQuantity("1");
+    setSellingPrice("");
+    setWholesalePrice("");
+    
+    // Show success message (optional)
+    alert("Product added to invoice!");
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -95,7 +137,8 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
               items.map((item, i) => (
                 <div
                   key={item.id}
-                  className={`grid grid-cols-5 text-xs sm:text-sm px-3 sm:px-4 py-3 sm:py-4 border-b border-white/10 hover:bg-white/10 transition-colors`}
+                  onClick={() => handleItemSelect(item)}
+                  className={`grid grid-cols-5 text-xs sm:text-sm px-3 sm:px-4 py-3 sm:py-4 border-b border-white/10 hover:bg-white/10 transition-colors cursor-pointer ${selectedItem?.id === item.id ? 'bg-blue-100' : ''}`}
                 >
                   <div className="text-center sm:text-left">{i + 1}</div>
                   <div className="text-center sm:text-left font-medium">{item.sku}</div>
@@ -121,20 +164,24 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
         </div>
 
         {/* FORM - Responsive */}
-        <div className="flex flex-col items-end ">
-
+        <div className="flex flex-col items-end mt-4">
           {/* Selected Product */}
-          <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4 ">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 ">
+          <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Selected :</span>
-                <span className="text-blue-700 font-bold text-sm sm:text-base">TYP7896</span>
+                <span className="font-semibold">Selected:</span>
+                <span className="text-blue-700 font-bold text-sm sm:text-base">
+                  {selectedItem ? selectedItem.sku : "None"}
+                </span>
               </div>
               <div className="flex-1 flex items-center gap-2">
                 <input
-                  type="text"
+                  type="number"
                   placeholder="Add quantity"
                   className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  min="1"
                 />
               </div>
             </div>
@@ -142,14 +189,18 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
 
           {/* Wholesale Price */}
           <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-[-20px]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Wholesale Price :</span>
+                <span className="font-semibold">Wholesale Price:</span>
               </div>
               <div className="flex-1 flex items-center gap-2">
                 <input
-                  type="text"
+                  type="number"
+                  placeholder="Enter wholesale price"
                   className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+                  value={wholesalePrice}
+                  onChange={(e) => setWholesalePrice(e.target.value)}
+                  step="0.01"
                 />
               </div>
             </div>
@@ -157,42 +208,47 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
 
           {/* Selling Price */}
           <div className="w-full sm:w-auto rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-[-20px]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Selling Price :</span>
+                <span className="font-semibold">Selling Price:</span>
               </div>
               <div className="flex-1 flex items-center gap-2">
                 <input
-                  type="text"
+                  type="number"
+                  placeholder="Enter selling price"
                   className="w-full sm:w-45 bg-white px-3 sm:px-4 py-2 rounded-[14px] outline-none focus:ring-2 focus:ring-blue-500"
+                  value={sellingPrice}
+                  onChange={(e) => setSellingPrice(e.target.value)}
+                  step="0.01"
+                  required
                 />
               </div>
             </div>
           </div>
-
         </div>
 
-
-        {/* FOOTER - Same layout as other modals */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
-          {/* Title - Same style as other modals */}
-          <div className="text-center sm:text-left">
-
-          </div>
-
-          {/* Action Buttons - Same as other modals */}
-          <div className="flex gap-3 sm:gap-4 mt-5">
-
-            <button className="px-6 sm:px-8 h-9 sm:h-11 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium text-sm sm:text-base hover:from-[#0E8A2A] hover:to-[#065C18] transition-all flex items-center gap-2">
-              <span>ADD </span>
-
+        {/* FOOTER */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 mt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-3 sm:gap-4">
+            <button
+              onClick={onClose}
+              className="px-6 sm:px-8 h-9 sm:h-11 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white rounded-full font-medium text-sm sm:text-base hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all flex items-center gap-2"
+            >
+              CANCEL
+            </button>
+            
+            <button
+              onClick={handleAddToInvoice}
+              disabled={!selectedItem}
+              className="px-6 sm:px-8 h-9 sm:h-11 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium text-sm sm:text-base hover:from-[#0E8A2A] hover:to-[#065C18] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>ADD</span>
             </button>
           </div>
         </div>
       </div>
     </div>
-
-
   );
 };
 

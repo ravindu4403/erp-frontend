@@ -163,3 +163,5 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
 };
 
 export default ViewStock;
+
+

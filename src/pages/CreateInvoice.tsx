@@ -6,14 +6,14 @@ import CreateCustomer from "./CreateCustomer";
 import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
-
+import type { InvoiceItem } from "../api/items";
 
 // Props for CreateInvoice
 interface CreateInvoiceProps {
   goBack: () => void;
 }
 
-const totalItems = 20;      // total data count
+const totalItems = 20;
 const itemsPerPage = 10;
 
 const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
@@ -24,43 +24,58 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [showProducts, setShowProducts] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
 
-    const [currentPage, setCurrentPage] = useState(1);
-
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-   // Selected customer
+  // Selected customer
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  
+
   // Quantity state
   const [qty, setQty] = useState(25);
   const increaseQty = () => setQty(qty + 1);
   const decreaseQty = () => qty > 0 && setQty(qty - 1);
 
   const prevPage = () => {
-  if (currentPage > 1) {
-    setCurrentPage((prev) => prev - 1);
-  }
-};
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
 
-const nextPage = () => {
-  if (currentPage < totalPages) {
-    setCurrentPage((prev) => prev + 1);
-  }
-};
+  const nextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  // Dynamic invoice items from SelectProducts
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+
+  // Add product from SelectProducts modal
+  const handleAddProduct = (product: InvoiceItem) => {
+    // Check if product already exists in invoice items
+    const existingItemIndex = invoiceItems.findIndex(item => item.id === product.id);
+    
+    if (existingItemIndex >= 0) {
+      // If exists, update quantity
+      const updatedItems = [...invoiceItems];
+      updatedItems[existingItemIndex].qty += product.qty;
+      setInvoiceItems(updatedItems);
+    } else {
+      // If new, add to list
+      setInvoiceItems(prev => [...prev, product]);
+    }
+  };
+
+  // Handle customer selection from AddCustomer modal
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+  };
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5">
-      {/* Top Bar - Responsive */}
+      {/* Top Bar */}
       <div className="w-[550px] max-w-2xl bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 py-3 mb-4 sm:mb-3">
         <button
           onClick={goBack}
           className="flex items-center gap-2 text-sm sm:text-base md:text-[17px] text-black"
         >
-          <img
-            src="/Polygon.png"
-            alt="Back"
-            className="w-5 h-5 sm:w-6 sm:h-6"
-          />
+          <img src="/Polygon.png" alt="Back" className="w-5 h-5 sm:w-6 sm:h-6" />
           POS
         </button>
         <span className="font-bold text-lg sm:text-xl md:text-[25px] text-black">
@@ -68,18 +83,14 @@ const nextPage = () => {
         </span>
         <button className="flex items-center gap-2 text-sm sm:text-base md:text-[17px] text-black opacity-50">
           POS
-          <img
-            src="/Polygon 2.png"
-            alt="Next"
-            className="w-5 h-5 sm:w-6 sm:h-6"
-          />
+          <img src="/Polygon 2.png" alt="Next" className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
 
       {/* Main Content */}
       <div className="w-full max-w-2xl">
         {/* Action Buttons Row */}
-        <div className="w-full flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-3  items-center justify-center">
+        <div className="w-full flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-3 items-center justify-center">
           <button
             onClick={() => setShowRecall(true)}
             className="w-full sm:w-65 h-12 sm:h-15 bg-gradient-to-b from-[#9BF5AD] via-[#4AED80] to-[#053E0A] text-white rounded-full font-bold text-sm sm:text-base md:text-[22px]"
@@ -96,8 +107,8 @@ const nextPage = () => {
         </div>
 
         {/* Customer & Info Card */}
-        <div className="sm:w-140 sm:h-52 bg-gradient-to-b from-[#D9D9D9] via-[#827E7E] to-[#676464] rounded-2xl p-3 sm:p-4 mb-4 sm:mb-3 sm:ml-14 ">
-          <div className="w-full flex flex-col sm:flex-row gap-3 sm:gap-4 ">
+        <div className="sm:w-140 sm:h-52 bg-gradient-to-b from-[#D9D9D9] via-[#827E7E] to-[#676464] rounded-2xl p-3 sm:p-4 mb-4 sm:mb-3 sm:ml-14">
+          <div className="w-full flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Customer Buttons */}
             <div className="flex flex-row gap-3 sm:gap-4">
               <button
@@ -129,7 +140,6 @@ const nextPage = () => {
               </button>
             </div>
 
-
             {/* Right Side Info */}
             <div className="flex-1 text-xs sm:text-[16px] text-white ml-5 mt-5">
               <div className="flex flex-col sm:flex-row mb-2">
@@ -138,29 +148,24 @@ const nextPage = () => {
                   :{" "}
                   <span className="text-blue-700 font-bold">
                     {selectedCustomer
-                      ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+                      ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}`
                       : "Select Customer"}
                   </span>
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row mb-2">
                 <span className="font-semibold w-24 sm:w-28">Bill No</span>
-                <span>
-                  : <span className="text-blue-700 font-bold">INV01258</span>
-                </span>
+                <span>: <span className="text-blue-700 font-bold">INV01258</span></span>
               </div>
 
               <div className="flex flex-col sm:flex-row mb-3 sm:mb-4">
                 <span className="font-semibold w-24 sm:w-28">Billing by</span>
-                <span>
-                  : <span className="text-blue-700 font-bold">Cashier 0025</span>
-                </span>
+                <span>: <span className="text-blue-700 font-bold">Cashier 0025</span></span>
               </div>
 
               {/* Quantity */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <span className="font-semibold w-28">Bag/Box Quantity</span>
-
                 <div className="flex items-center bg-[#D9D9D9] rounded-lg px-2 py-1 gap-2 shadow">
                   <button
                     onClick={increaseQty}
@@ -181,7 +186,6 @@ const nextPage = () => {
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -195,10 +199,9 @@ const nextPage = () => {
         </button>
 
         {/* ITEMS TABLE */}
-        <div className=" h-[70vh] sm:w-140  sm:h-[40vh] bg-[#2F2F2F] rounded-lg overflow-hidden mb-4 sm:mb-3 flex flex-col sm:ml-14 ">
-
+        <div className="h-[70vh] sm:w-140 sm:h-[40vh] bg-[#2F2F2F] rounded-lg overflow-hidden mb-4 sm:mb-3 flex flex-col sm:ml-14">
           {/* Table Header */}
-          <div className="grid grid-cols-6 gap-6 text-[10px] sm:text-[15px] text-white bg-[#3A3A3A] px-2 sm:px-3 py-2 font-semibold ">
+          <div className="grid grid-cols-6 gap-6 text-[10px] sm:text-[15px] text-white bg-[#3A3A3A] px-2 sm:px-3 py-2 font-semibold">
             <div>Item<br />No</div>
             <div>SKU</div>
             <div>Item Name</div>
@@ -208,33 +211,26 @@ const nextPage = () => {
           </div>
 
           {/* Table Body */}
-          <div className="flex-1 overflow-y-auto  text-[10px] sm:text-[13px] text-white">
-            {/* Row */}
-            <div className="grid grid-cols-6 px-2 sm:px-3 py-2 border-b border-white/10">
-              <div>01</div>
-              <div>FUA1245</div>
-              <div>Ben 10 action figure</div>
-              <div>85752453</div>
-              <div>100.00</div>
-              <div className="flex items-center justify-center">
-                <span className="px-2 py-1 border border-lime-400 rounded text-lime-400">
-                  5
-                </span>
+          <div className="flex-1 overflow-y-auto text-[10px] sm:text-[13px] text-white">
+            {invoiceItems.map((item, i) => (
+              <div key={item.id} className="grid grid-cols-6 px-2 sm:px-3 py-2 border-b border-white/10">
+                <div>{i + 1}</div>
+                <div>{item.sku}</div>
+                <div>{item.name}</div>
+                <div>{item.description}</div>
+                <div>${item.unitPrice.toFixed(2)}</div>
+                <div className="flex items-center justify-center">
+                  <span className="px-2 py-1 border border-lime-400 rounded text-lime-400">
+                    {item.qty}
+                  </span>
+                </div>
               </div>
-            </div>
+            ))}
 
-            {/* Empty rows (visual only) */}
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-6 px-2 sm:px-3 py-3 border-b border-white/5"
-              >
-                <div>&nbsp;</div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
+            {/* Empty rows if needed */}
+            {[...Array(Math.max(0, 12 - invoiceItems.length))].map((_, i) => (
+              <div key={`empty-${i}`} className="grid grid-cols-6 px-2 sm:px-3 py-3 border-b border-white/5">
+                {Array.from({ length: 6 }).map((_, c) => <div key={c}>&nbsp;</div>)}
               </div>
             ))}
           </div>
@@ -242,46 +238,39 @@ const nextPage = () => {
           {/* Bottom Summary */}
           <div className="flex w-full text-[10px] sm:text-[15px] font-semibold">
             <div className="w-1/2 bg-[#1E40FF] text-white px-3 sm:px-4 py-2 sm:py-3">
-              Total Item count<br />- 12
+              Total Item count<br />- {invoiceItems.length}
             </div>
             <div className="w-1/2 bg-[#1F4D1F] text-white px-3 sm:px-4 py-2 sm:py-3 text-right">
-              Total Amount - 5500.00
+              Total Amount - ${invoiceItems.reduce((acc, i) => acc + i.unitPrice * i.qty, 0).toFixed(2)}
             </div>
           </div>
-
         </div>
 
-    <div className="w-full max-w-2xl flex items-center gap-4 text-sm sm:text-base text-white/80 ml-12">
-      
-      {/* PREVIOUS */}
-      <button
-        onClick={prevPage}
-        disabled={currentPage === 1}
-        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
-                   disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
-      >
-        ◀
-      </button>
+        {/* Pagination */}
+        <div className="w-full max-w-2xl flex items-center gap-4 text-sm sm:text-base text-white/80 ml-12">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
+                       disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            ◀
+          </button>
+          <span className="font-medium">
+            Page <span className="font-bold">{currentPage}</span> of{" "}
+            <span className="font-bold">{totalPages}</span>
+          </span>
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
+                       disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            ▶
+          </button>
+        </div>
 
-      {/* PAGE INFO */}
-      <span className="font-medium">
-        Page <span className="font-bold">{currentPage}</span> of{" "}
-        <span className="font-bold">{totalPages}</span>
-      </span>
-
-      {/* NEXT */}
-      <button
-        onClick={nextPage}
-        disabled={currentPage === totalPages}
-        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full
-                   disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
-      >
-        ▶
-      </button>
-    </div>
-  
-
-        {/* SEND TO CASHIER BUTTON */}
+        {/* Send to cashier */}
         <button
           onClick={() => setShowSendConfirm(true)}
           className="w-full h-12 sm:w-[550px] sm:h-16 sm:ml-15 bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-xl font-bold text-sm sm:text-base md:text-[22px] flex items-center justify-center gap-2 mt-2"
@@ -293,7 +282,6 @@ const nextPage = () => {
 
       {/* Modals */}
       {showRecall && <RecallInvoice onClose={() => setShowRecall(false)} />}
-
       {showCancelConfirm && (
         <CancelInvoiceConfirm
           onClose={() => setShowCancelConfirm(false)}
@@ -303,23 +291,14 @@ const nextPage = () => {
           }}
         />
       )}
-
       {showAddCustomer && (
         <AddCustomer
           onClose={() => setShowAddCustomer(false)}
-          onSelect={(customer) => {
-            setSelectedCustomer(customer);
-            setShowAddCustomer(false);
-          }}
+          onSelect={handleSelectCustomer}
         />
       )}
-
-      {showCreateCustomer && (
-        <CreateCustomer onClose={() => setShowCreateCustomer(false)} />
-      )}
-
-      {showProducts && <SelectProducts onClose={() => setShowProducts(false)} />}
-
+      {showCreateCustomer && <CreateCustomer onClose={() => setShowCreateCustomer(false)} />}
+      {showProducts && <SelectProducts onClose={() => setShowProducts(false)} onAdd={handleAddProduct} />}
       {showSendConfirm && (
         <SendInvoiceConfirm
           onConfirm={() => {
