@@ -55,7 +55,7 @@ function LoginPage() {
     localStorage.removeItem("token");
 
     try {
-      const res = await api.post("/api/auth/login", {
+      const res = await api.post("/auth/login", {
         email: username,
         password: password,
       });

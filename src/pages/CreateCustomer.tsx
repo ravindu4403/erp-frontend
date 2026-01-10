@@ -5,51 +5,43 @@ import { createCustomer } from "../api/customers";
 interface CreateCustomerProps {
   onClose: () => void;
   onCreated?: (customer: any) => void;
-
 }
 
-const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
-  const [loading, setLoading] = useState(false);
 
-    // Form state
+const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+    first_name: "",
+    last_name: "",
+    middle_name: "",
     address: "",
+    telephone: "",
     description: "",
   });
 
-    // Handle input changes
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-    // Submit form data
   const handleSubmit = async () => {
-    if (!form.firstName || !form.lastName) {
-      alert("First name and last name are required");
+    if (!form.first_name || !form.last_name) {
+      alert("First name and Last name are required");
       return;
     }
 
     try {
       setLoading(true);
-
       const res = await createCustomer(form);
-
-    // Send created customer to parent
       onCreated?.(res.data);
-
       onClose();
-    } catch (err) {
-      alert("Failed to create customer");
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Failed to create customer");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -72,8 +64,8 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
             </label>
             <input
               type="text"
-              name="firstName"
-              value={form.firstName}
+              name="first_name"
+              value={form.first_name}
               onChange={handleChange}
               className="w-full h-8 bg-[#EDEDED] rounded-[13px] px-3 outline-none"
             />
@@ -86,8 +78,8 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
             </label>
             <input
               type="text"
-              name="lastName"
-              value={form.lastName}
+              name="last_name"
+              value={form.last_name}
               onChange={handleChange}
               className="w-full h-8 bg-[#EDEDED] rounded-[13px] px-3 outline-none"
             />
@@ -114,9 +106,9 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
               Email
             </label>
             <input
-              type="email"
-              name="email"
-              value={form.email}
+              type="middle_name"
+              name="middle_name"
+              value={form.middle_name}
               onChange={handleChange}
               className="w-full h-8  bg-[#EDEDED] rounded-[13px] px-3 outline-none"
             />
@@ -127,8 +119,8 @@ const CreateCustomer = ({ onClose, onCreated }: CreateCustomerProps) => {
             </label>
             <input
               type="text"
-              name="phone"
-              value={form.phone}
+              name="telephone"
+              value={form.telephone}
               onChange={handleChange}
               className="w-full h-8  bg-[#EDEDED] rounded-[13px] px-3 outline-none"
             />

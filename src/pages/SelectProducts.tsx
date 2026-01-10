@@ -1,8 +1,51 @@
+import { useEffect, useState } from "react";
+import { getItems } from "../api/items";
+
 interface SelectProductsProps {
-  onClose: () => void; // Function called to close the modal
+  onClose: () => void;
+}
+
+interface Item {
+  id: number;
+  sub_category_id: number;
+  name: string;
+  other_name: string;
+  description: string;
+  origin: string;
+  sku: string;
+  created_at: string;
 }
 
 const SelectProducts = ({ onClose }: SelectProductsProps) => {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        const res = await getItems(search);
+        console.log("Items API Response:", res.data);
+        if (Array.isArray(res.data)) {
+          setItems(res.data);
+        } else if (res.data.data && Array.isArray(res.data.data)) {
+          // If API wraps in `data`
+          setItems(res.data.data);
+        } else {
+          setItems([]);
+        }
+      } catch (err) {
+        console.error("Error fetching items:", err);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [search]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* BACKDROP */}
@@ -11,10 +54,9 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
         onClick={onClose}
       />
 
-      {/* MODAL - Same size as other modals */}
+      {/* MODAL */}
       <div className="relative w-full max-w-2xl lg:max-w-4xl bg-[#D9D9D9] rounded-xl sm:rounded-xl p-4 sm:p-6 shadow-2xl">
-
-        {/* SEARCH - Same as other modals */}
+        {/* SEARCH */}
         <div className="flex items-center bg-white rounded-[12px] px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
           <img
             src="./search-products.png"
@@ -25,10 +67,12 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
             type="text"
             placeholder="Search Products..."
             className="w-full outline-none text-sm sm:text-base bg-transparent placeholder:text-gray-500"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* TABLE - Same height as other modals */}
+        {/* TABLE */}
         <div className="bg-[#A0A0A0] rounded-xl sm:rounded-xl overflow-hidden ">
           {/* HEADER */}
           <div className="grid grid-cols-5 bg-[#2F2F2F] text-xs sm:text-sm font-semibold text-white px-3 sm:px-4 py-3 sm:py-4">
@@ -39,37 +83,37 @@ const SelectProducts = ({ onClose }: SelectProductsProps) => {
             <div className="text-center sm:text-left">Outlet</div>
           </div>
 
-          {/* ROWS - Same height as other modals */}
+          {/* ROWS */}
           <div className="h-36 sm:h-48 overflow-y-auto">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`grid grid-cols-5 text-xs sm:text-sm px-3 sm:px-4 py-3 sm:py-4 border-b border-white/10 hover:bg-white/10 transition-colors ${i === 2 ? "bg-[#7A9FD6]" : ""
-                  }`}
-              >
-                <div className="text-center sm:text-left">{i}</div>
-                <div className="text-center sm:text-left font-medium">
-                  {i === 1 ? "TYP5398" : i === 2 ? "TYP7896" : `TYP${4000 + i}`}
+            {loading && <div className="text-center py-6">Loading...</div>}
+
+            {!loading && items.length === 0 && (
+              <div className="text-center py-6">No items found</div>
+            )}
+
+            {!loading &&
+              items.map((item, i) => (
+                <div
+                  key={item.id}
+                  className={`grid grid-cols-5 text-xs sm:text-sm px-3 sm:px-4 py-3 sm:py-4 border-b border-white/10 hover:bg-white/10 transition-colors`}
+                >
+                  <div className="text-center sm:text-left">{i + 1}</div>
+                  <div className="text-center sm:text-left font-medium">{item.sku}</div>
+                  <div className="text-center sm:text-left">{item.description}</div>
+                  <div className="text-center sm:text-left">{item.name}</div>
+                  <div className="text-center sm:text-left">{item.origin}</div>
                 </div>
-                <div className="text-center sm:text-left">879652-7{i}</div>
-                <div className="text-center sm:text-left">
-                  {i === 1 ? "BEN 10 Watch" : i === 2 ? "BEN 10 Car" : `Product ${i}`}
-                </div>
-                <div className="text-center sm:text-left">
-                  {i === 1 ? "S3F1" : i === 2 ? "S3F5" : `S3F${i}`}
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
-        {/* PAGINATION - Same as other modals */}
+        {/* PAGINATION */}
         <div className="flex items-center mt-2">
           <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black">
             ◀
           </button>
           <span className="text-sm sm:text-base font-medium text-black">
-            Page <span className="font-bold">2</span> of <span className="font-bold">2</span>
+            Page <span className="font-bold">1</span> of <span className="font-bold">1</span>
           </span>
           <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black">
             ▶

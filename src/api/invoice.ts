@@ -1,10 +1,12 @@
 import api from "./axios";
 
+
+export const getInvoices = () => api.get("/pos/invoices"); // no extra /api here
 export const createInvoice = (data: {
   customerId: number;
   cashierId: number;
   boxQuantity: number;
-}) => api.post("/invoice/create", data);
+}) => api.post("/pos/invoice/create", data);
 
 export const addInvoiceItem = (
   invoiceId: number,
@@ -13,7 +15,7 @@ export const addInvoiceItem = (
     quantity: number;
     unitPrice: number;
   }
-) => api.post(`/invoice/${invoiceId}/add-item`, data);
+) => api.post(`/pos/invoice/${invoiceId}/add-item`, data);
 
 export const sendInvoice = (invoiceId: number) =>
-  api.post(`/invoice/${invoiceId}/send`);
+  api.post(`/pos/invoice/${invoiceId}/send`);
