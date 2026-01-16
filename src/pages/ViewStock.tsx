@@ -8,18 +8,18 @@ interface ViewStockProps {
 interface Stock {
   id: number;
   name: string;
-  sinhala_name?: string;
-  type?: string;
-  category?: string;
-  sub_category?: string;
+  other_name?: string;
+  type_name?: string;
+  category_name?: string;
+  sub_category_name?: string;
   sku?: string;
   description?: string;
   rack?: string;
-  outlet?: string;
+  outlet_name?: string;
   origin?: string;
-  buying_price?: number;
+  buy_price?: number;
   retail_price?: number;
-  wholesale_price?: number;
+  stock_price?: number;
   quantity?: number;
   unit?: string;
   created_at?: string;
@@ -113,18 +113,18 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
               stocks.map((stock) => (
                 <div key={stock.id} className="grid grid-cols-17 bg-[#3A3A3A]">
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.name}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.sinhala_name || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.type || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.category || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.sub_category || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.other_name || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.type_name || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.category_name || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.sub_category_name || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.sku || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.description || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.rack || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.outlet || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.origin || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.buying_price || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.outlet_name || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">  {(stock as any)["item.origin"] || "-"}</div>                                   
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.buy_price || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.retail_price || "-"}</div>
-                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.wholesale_price || "-"}</div>
+                  <div className="px-2 py-3 border-r border-white/10 truncate">{stock.stock_price || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.quantity || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.unit || "-"}</div>
                   <div className="px-2 py-3 border-r border-white/10 truncate">{stock.created_at?.split("T")[0]}</div>

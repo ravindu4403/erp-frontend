@@ -25,6 +25,14 @@ function MainMenu() {
     }
   }, []);
 
+  const handleLogout = () => {
+  localStorage.removeItem("username");
+  localStorage.removeItem("token"); // if you use token
+  localStorage.removeItem("loginSuccess");
+  navigate("/");
+};
+
+
   if (showViewStock) return <ViewStock goBack={() => setShowViewStock(false)} />;
 
 
@@ -32,6 +40,7 @@ function MainMenu() {
     <div className="min-h-screen bg-black  flex flex-col items-center justify-center py-10">
       <div className="w-full max-w-md">
         <div className="bg-black rounded-lg p-8 ">
+       
           <div className="flex justify-center mb-6">
             {showSuccess && (
               <div className="w-80 bg-green-700 text-white px-4 py-2.5 rounded-full text-[18px] font-medium text-center mb-4 mx-auto">
@@ -110,9 +119,16 @@ function MainMenu() {
                 />
               }
 
+              
+
             />
           </div>
-
+         <button
+        onClick={handleLogout}
+        className="w-40 h-12 bg-red-700  text-white px-4 py-2 rounded-full text-sm items-center mt-8 hover:bg-red-800 transition-colors justify-center flex mx-auto font-bold font-lg"
+      >
+        Logout
+      </button>
         </div>
       </div>
     </div>

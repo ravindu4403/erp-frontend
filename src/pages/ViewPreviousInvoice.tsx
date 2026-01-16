@@ -125,7 +125,11 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
               </div>
 
               {/* Created For */}
-              <div>-</div>
+              <div className="font-semibold">
+                {inv.created_user
+                  ? `${inv.created_user.first_name} ${inv.created_user.last_name}`
+                  : "-"}
+              </div>
 
               {/* Value */}
               <div className="font-semibold">
