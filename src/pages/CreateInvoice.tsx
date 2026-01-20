@@ -1,5 +1,5 @@
 // CreateInvoice.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import RecallInvoice from "./RecallInvoice";
 import CancelInvoiceConfirm from "./CancelInvoiceConfirm";
 import AddCustomer from "./AddCustomer";
@@ -37,11 +37,48 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
   // Invoice details
   const invoiceNumber = "INV01258";
-  const cashierId = 25; // Cashier 0025
+  const [cashierId, setCashierId] = useState<number | null>(null); // Will get from token
   const [discountType] = useState<"percentage" | "fixed">("percentage");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
   const [previousInvoiceId, setPreviousInvoiceId] = useState<number | null>(null);
+
+  // Get user ID from JWT token on component mount
+  useEffect(() => {
+    const getUserIdFromToken = () => {
+      try {
+        // Get token from localStorage or cookies
+        const token = localStorage.getItem('access_token') || 
+                     document.cookie.split('; ')
+                       .find(row => row.startsWith('access_token='))
+                       ?.split('=')[1];
+        
+        if (token) {
+          // Decode JWT token to get user ID
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log("JWT Payload:", payload);
+          setCashierId(payload.sub || payload.userId || payload.id);
+        } else {
+          // Fallback: Try to get user from local storage
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            const user = JSON.parse(userData);
+            setCashierId(user.id || user.userId);
+          } else {
+            // If no token found, use a default valid ID (1 is usually admin)
+            console.warn("No token found, using default user ID 1");
+            setCashierId(1);
+          }
+        }
+      } catch (error) {
+        console.error("Error getting user ID from token:", error);
+        // Fallback to a valid user ID
+        setCashierId(1);
+      }
+    };
+
+    getUserIdFromToken();
+  }, []);
 
   // Calculate totals
   const subtotal = invoiceItems.reduce((acc, item) => acc + (item.unitPrice * item.qty), 0);
@@ -100,26 +137,40 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       return;
     }
 
+    if (!cashierId) {
+      alert("Unable to identify user. Please login again.");
+      return;
+    }
+
     try {
       // Step 1: Create the invoice with snake_case field names
       const invoiceData = {
         customer_id: selectedCustomer.id,
-        created_user_id: cashierId,
-        status: "pending",
-        previous_invoice_id: previousInvoiceId,
-        paid_amount: paidAmount,
+        created_user_id: cashierId, // Use the actual user ID from token
+        status: "PENDING", // Use uppercase as per API response example
+        previous_invoice_id: previousInvoiceId || null,
+        paid_amount: paidAmount || 0,
         total_amount: totalAmount,
-        discount_type: discountType,
-        discount_amount: discountAmount,
+        discount_type: discountType.toUpperCase(), // "PERCENTAGE" or "FLAT"
+        discount_amount: discountAmount || 0,
         box_quantity: qty,
       };
 
       console.log("Sending invoice data:", invoiceData);
 
       const invoiceResponse = await createInvoice(invoiceData);
-      const newInvoiceId = invoiceResponse.data.id || invoiceResponse.data.data?.id;
       
-      if (!newInvoiceId) {
+      // Extract invoice ID - check different possible response structures
+      let newInvoiceId: number;
+      
+      if (invoiceResponse.data?.id) {
+        newInvoiceId = invoiceResponse.data.id;
+      } else if (invoiceResponse.data?.data?.id) {
+        newInvoiceId = invoiceResponse.data.data.id;
+      } else if (invoiceResponse.data?.invoiceId) {
+        newInvoiceId = invoiceResponse.data.invoiceId;
+      } else {
+        console.error("Full response:", invoiceResponse);
         throw new Error("No invoice ID returned from server");
       }
 
@@ -128,9 +179,11 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       // Step 2: Add all items to the invoice
       const itemPromises = invoiceItems.map(item => 
         addInvoiceItem(newInvoiceId, {
-          product_id: item.id,
+          stock_id: item.id, // Using item.id as stock_id (adjust if needed)
           quantity: item.qty,
-          unit_price: item.unitPrice
+          selling_price: item.unitPrice, // Using selling_price instead of unit_price
+          discount_type: discountType.toUpperCase(),
+          discount_amount: 0 // Set to 0 or calculate if you have item-level discounts
         })
       );
 
@@ -158,7 +211,25 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       if (error.response) {
         console.error("Error response:", error.response.data);
         console.error("Error status:", error.response.status);
-        alert(`Failed to send invoice: ${error.response.data?.message || "Validation error"}`);
+        console.error("Error headers:", error.response.headers);
+        
+        // More specific error messages
+        if (error.response.status === 500) {
+          const errorMsg = error.response.data?.message || "Internal server error";
+          if (errorMsg.includes("foreign key constraint")) {
+            alert("Database error: The user or customer doesn't exist. Please check your IDs.");
+          } else {
+            alert(`Server error: ${errorMsg}`);
+          }
+        } else if (error.response.status === 404) {
+          alert("API endpoint not found. Please check the server URL.");
+        } else if (error.response.status === 401) {
+          alert("Session expired. Please login again.");
+        } else if (error.response.status === 400) {
+          alert(`Validation error: ${error.response.data?.message || "Check your input data"}`);
+        } else {
+          alert(`Failed to send invoice: ${error.response.data?.message || "Unknown error"}`);
+        }
       } else if (error.request) {
         console.error("No response received:", error.request);
         alert("No response from server. Please check your connection.");
@@ -180,6 +251,9 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     setShowCancelConfirm(false);
     alert("Invoice cancelled successfully!");
   };
+
+  // Display cashier ID for debugging
+  const displayCashierId = cashierId ? `Cashier ${cashierId.toString().padStart(4, '0')}` : "Loading...";
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5">
@@ -274,7 +348,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
               <div className="flex flex-col sm:flex-row mb-3 sm:mb-4">
                 <span className="font-semibold w-24 sm:w-28">Billing by</span>
-                <span>: <span className="text-blue-700 font-bold">Cashier 0025</span></span>
+                <span>: <span className="text-blue-700 font-bold">{displayCashierId}</span></span>
               </div>
 
               {/* Quantity */}
@@ -380,7 +454,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         {/* Send to cashier */}
         <button
           onClick={() => setShowSendConfirm(true)}
-          disabled={!selectedCustomer || invoiceItems.length === 0}
+          disabled={!selectedCustomer || invoiceItems.length === 0 || !cashierId}
           className="w-full h-12 sm:w-[550px] sm:h-16 sm:ml-15 bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-xl font-bold text-sm sm:text-base md:text-[22px] flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Send Invoice to cashier

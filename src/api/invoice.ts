@@ -1,9 +1,7 @@
-// api/invoice.ts
 import api from "./axios";
 
 export const getInvoices = () => api.get("/pos/invoices");
 
-// Update this to accept ALL required fields in snake_case
 export const createInvoice = (data: {
   customer_id: number;
   created_user_id: number;
@@ -19,11 +17,13 @@ export const createInvoice = (data: {
 export const addInvoiceItem = (
   invoiceId: number,
   data: {
-    product_id: number;
+    stock_id: number;
     quantity: number;
-    unit_price: number;
+    selling_price?: number;
+    discount_type?: string;
+    discount_amount?: number;
   }
-) => api.post(`/pos/invoice/${invoiceId}/add-item`, data);
+) => api.post(`/pos/invoice/${invoiceId}/item`, data);
 
 export const sendInvoice = (invoiceId: number) =>
   api.post(`/pos/invoice/${invoiceId}/send`);
