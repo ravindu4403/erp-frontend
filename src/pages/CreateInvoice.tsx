@@ -1,5 +1,4 @@
-// CreateInvoice.tsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import RecallInvoice from "./RecallInvoice";
 import CancelInvoiceConfirm from "./CancelInvoiceConfirm";
 import AddCustomer from "./AddCustomer";
@@ -10,122 +9,97 @@ import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
 import { createInvoice, addInvoiceItem, sendInvoice } from "../api/invoice";
 
-// Props for CreateInvoice
+/* ================= TOKEN HELPERS ================= */
+
+const getUserFromToken = () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+};
+
+const getUserIdFromToken = (): number | null => {
+  const payload = getUserFromToken();
+  return payload?.sub ?? payload?.user_id ?? payload?.id ?? null;
+};
+
+const getUserNameFromToken = (): string => {
+  const payload = getUserFromToken();
+  return payload?.username ?? payload?.name ?? "User";
+};
+
+/* ================= COMPONENT ================= */
+
 interface CreateInvoiceProps {
   goBack: () => void;
 }
 
 const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
-  // Modal states
+  /* ================= MODALS ================= */
   const [showRecall, setShowRecall] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
-  
-  // Selected customer
+
+  /* ================= DATA ================= */
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  
-  // Invoice items
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
-  
-  // Quantity for bag/box
   const [qty, setQty] = useState(25);
+
   const increaseQty = () => setQty(qty + 1);
   const decreaseQty = () => qty > 0 && setQty(qty - 1);
 
-  // Invoice details
-  const invoiceNumber = "INV01258";
-  const [cashierId, setCashierId] = useState<number | null>(null); // Will get from token
+  const [invoiceNumber, setInvoiceNumber] = useState<string>("AUTO");
   const [discountType] = useState<"percentage" | "fixed">("percentage");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
   const [previousInvoiceId, setPreviousInvoiceId] = useState<number | null>(null);
 
-  // Get user ID from JWT token on component mount
-  useEffect(() => {
-    const getUserIdFromToken = () => {
-      try {
-        // Get token from localStorage or cookies
-        const token = localStorage.getItem('access_token') || 
-                     document.cookie.split('; ')
-                       .find(row => row.startsWith('access_token='))
-                       ?.split('=')[1];
-        
-        if (token) {
-          // Decode JWT token to get user ID
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          console.log("JWT Payload:", payload);
-          setCashierId(payload.sub || payload.userId || payload.id);
-        } else {
-          // Fallback: Try to get user from local storage
-          const userData = localStorage.getItem('user');
-          if (userData) {
-            const user = JSON.parse(userData);
-            setCashierId(user.id || user.userId);
-          } else {
-            // If no token found, use a default valid ID (1 is usually admin)
-            console.warn("No token found, using default user ID 1");
-            setCashierId(1);
-          }
-        }
-      } catch (error) {
-        console.error("Error getting user ID from token:", error);
-        // Fallback to a valid user ID
-        setCashierId(1);
-      }
-    };
+  /* ================= TOTALS ================= */
+  const subtotal = invoiceItems.reduce(
+    (acc, item) => acc + item.unitPrice * item.qty,
+    0
+  );
 
-    getUserIdFromToken();
-  }, []);
+  const discountValue =
+    discountType === "percentage"
+      ? (subtotal * discountAmount) / 100
+      : discountAmount;
 
-  // Calculate totals
-  const subtotal = invoiceItems.reduce((acc, item) => acc + (item.unitPrice * item.qty), 0);
-  const discountValue = discountType === "percentage" ? (subtotal * discountAmount / 100) : discountAmount;
   const totalAmount = subtotal - discountValue;
-
   const itemCount = invoiceItems.length;
 
-  // Handle customer selection from AddCustomer modal
-  const handleSelectCustomer = (customer: Customer) => {
-    setSelectedCustomer(customer);
-  };
+  /* ================= HANDLERS ================= */
 
-  // Handle customer creation
-  const handleCustomerCreated = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setShowCreateCustomer(false);
-  };
-
-  // Add product from SelectProducts modal
   const handleAddProduct = (product: InvoiceItem) => {
-    const existingItemIndex = invoiceItems.findIndex(item => item.id === product.id);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...invoiceItems];
-      updatedItems[existingItemIndex].qty += product.qty;
-      setInvoiceItems(updatedItems);
+    const index = invoiceItems.findIndex(i => i.id === product.id);
+    if (index >= 0) {
+      const updated = [...invoiceItems];
+      updated[index].qty += product.qty;
+      setInvoiceItems(updated);
     } else {
       setInvoiceItems(prev => [...prev, product]);
     }
   };
 
-  // Remove item from invoice
   const handleRemoveItem = (index: number) => {
-    const updatedItems = invoiceItems.filter((_, i) => i !== index);
-    setInvoiceItems(updatedItems);
+    setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
   };
 
-  // Handle recall invoice
   const handleRecallInvoice = (invoice: any) => {
-    console.log("Recalled invoice:", invoice);
-    setShowRecall(false);
-    alert(`Invoice INV${invoice.id} recalled!`);
     setPreviousInvoiceId(invoice.id);
+    setInvoiceNumber(invoice.invoice_no ?? `INV-${invoice.id}`);
+    setShowRecall(false);
   };
 
-  // Create invoice with all required fields
+  /* ================= SEND INVOICE ================= */
+
   const handleSendInvoice = async () => {
     if (!selectedCustomer) {
       alert("Please select a customer first");
@@ -137,110 +111,75 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       return;
     }
 
-    if (!cashierId) {
-      alert("Unable to identify user. Please login again.");
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      alert("User session invalid. Please login again.");
       return;
     }
 
     try {
-      // Step 1: Create the invoice with snake_case field names
-      const invoiceData = {
+      const invoicePayload = {
         customer_id: selectedCustomer.id,
-        created_user_id: cashierId, // Use the actual user ID from token
-        status: "PENDING", // Use uppercase as per API response example
-        previous_invoice_id: previousInvoiceId || null,
-        paid_amount: paidAmount || 0,
+        created_user_id: userId,
+        status: "PENDING",
+        previous_invoice_id: previousInvoiceId,
+        paid_amount: paidAmount,
         total_amount: totalAmount,
-        discount_type: discountType.toUpperCase(), // "PERCENTAGE" or "FLAT"
-        discount_amount: discountAmount || 0,
-        box_quantity: qty,
+        discount_type: discountType.toUpperCase(),
+        discount_amount: discountAmount,
+        next_box_number: qty
       };
 
-      console.log("Sending invoice data:", invoiceData);
+      const invoiceResponse = await createInvoice(invoicePayload);
 
-      const invoiceResponse = await createInvoice(invoiceData);
-      
-      // Extract invoice ID - check different possible response structures
-      let newInvoiceId: number;
-      
-      if (invoiceResponse.data?.id) {
-        newInvoiceId = invoiceResponse.data.id;
-      } else if (invoiceResponse.data?.data?.id) {
-        newInvoiceId = invoiceResponse.data.data.id;
-      } else if (invoiceResponse.data?.invoiceId) {
-        newInvoiceId = invoiceResponse.data.invoiceId;
-      } else {
-        console.error("Full response:", invoiceResponse);
-        throw new Error("No invoice ID returned from server");
+      const newInvoiceId =
+        invoiceResponse.data?.id ??
+        invoiceResponse.data?.data?.id ??
+        invoiceResponse.data?.invoiceId;
+
+      const newInvoiceNo =
+        invoiceResponse.data?.invoice_no ??
+        invoiceResponse.data?.data?.invoice_no ??
+        `INV-${newInvoiceId}`;
+
+      if (!newInvoiceId) {
+        throw new Error("Invoice ID not returned");
       }
 
-      console.log("Invoice created with ID:", newInvoiceId);
+      setInvoiceNumber(newInvoiceNo);
 
-      // Step 2: Add all items to the invoice
-      const itemPromises = invoiceItems.map(item => 
-        addInvoiceItem(newInvoiceId, {
-          stock_id: item.id, // Using item.id as stock_id (adjust if needed)
-          quantity: item.qty,
-          selling_price: item.unitPrice, // Using selling_price instead of unit_price
-          discount_type: discountType.toUpperCase(),
-          discount_amount: 0 // Set to 0 or calculate if you have item-level discounts
-        })
+      await Promise.all(
+        invoiceItems.map(item =>
+          addInvoiceItem(newInvoiceId, {
+            stock_id: item.id,
+            quantity: item.qty,
+            selling_price: item.unitPrice,
+            discount_type: discountType.toUpperCase(),
+            discount_amount: 0
+          })
+        )
       );
 
-      await Promise.all(itemPromises);
-      console.log("All items added to invoice");
-
-      // Step 3: Send the invoice
       await sendInvoice(newInvoiceId);
-      console.log("Invoice sent successfully");
 
-      // Reset form
+      /* RESET */
       setInvoiceItems([]);
       setSelectedCustomer(null);
       setQty(25);
       setDiscountAmount(0);
       setPaidAmount(0);
       setPreviousInvoiceId(null);
-      
-      alert("Invoice sent to cashier successfully!");
       setShowSendConfirm(false);
-      
+
+      alert("Invoice sent to cashier successfully!");
     } catch (error: any) {
-      console.error("Error creating invoice:", error);
-      
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
-        console.error("Error headers:", error.response.headers);
-        
-        // More specific error messages
-        if (error.response.status === 500) {
-          const errorMsg = error.response.data?.message || "Internal server error";
-          if (errorMsg.includes("foreign key constraint")) {
-            alert("Database error: The user or customer doesn't exist. Please check your IDs.");
-          } else {
-            alert(`Server error: ${errorMsg}`);
-          }
-        } else if (error.response.status === 404) {
-          alert("API endpoint not found. Please check the server URL.");
-        } else if (error.response.status === 401) {
-          alert("Session expired. Please login again.");
-        } else if (error.response.status === 400) {
-          alert(`Validation error: ${error.response.data?.message || "Check your input data"}`);
-        } else {
-          alert(`Failed to send invoice: ${error.response.data?.message || "Unknown error"}`);
-        }
-      } else if (error.request) {
-        console.error("No response received:", error.request);
-        alert("No response from server. Please check your connection.");
-      } else {
-        console.error("Error message:", error.message);
-        alert(`Failed to send invoice: ${error.message}`);
-      }
+      alert(
+        error?.response?.data?.message ||
+        "Failed to send invoice. Please try again."
+      );
     }
   };
 
-  // Handle cancel invoice
   const handleCancelInvoice = () => {
     setInvoiceItems([]);
     setSelectedCustomer(null);
@@ -251,10 +190,6 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     setShowCancelConfirm(false);
     alert("Invoice cancelled successfully!");
   };
-
-  // Display cashier ID for debugging
-  const displayCashierId = cashierId ? `Cashier ${cashierId.toString().padStart(4, '0')}` : "Loading...";
-
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5">
       {/* Top Bar */}
@@ -348,7 +283,8 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
               <div className="flex flex-col sm:flex-row mb-3 sm:mb-4">
                 <span className="font-semibold w-24 sm:w-28">Billing by</span>
-                <span>: <span className="text-blue-700 font-bold">{displayCashierId}</span></span>
+                <span>: <span className="text-blue-700 font-bold">{getUserNameFromToken()}</span></span>
+               
               </div>
 
               {/* Quantity */}
@@ -454,7 +390,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         {/* Send to cashier */}
         <button
           onClick={() => setShowSendConfirm(true)}
-          disabled={!selectedCustomer || invoiceItems.length === 0 || !cashierId}
+          disabled={!selectedCustomer || invoiceItems.length === 0}
           className="w-full h-12 sm:w-[550px] sm:h-16 sm:ml-15 bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-xl font-bold text-sm sm:text-base md:text-[22px] flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Send Invoice to cashier
@@ -470,16 +406,12 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
           onConfirm={handleCancelInvoice}
         />
       )}
-      {showAddCustomer && (
-        <AddCustomer
-          onClose={() => setShowAddCustomer(false)}
-          onSelect={handleSelectCustomer}
-        />
-      )}
+     {showAddCustomer && <AddCustomer onClose={() => setShowAddCustomer(false)} onSelect={setSelectedCustomer} />}
+      
       {showCreateCustomer && (
         <CreateCustomer
           onClose={() => setShowCreateCustomer(false)}
-          onCustomerCreated={handleCustomerCreated}
+          onCustomerCreated={setSelectedCustomer}
         />
       )}
       {showProducts && (

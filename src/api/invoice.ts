@@ -4,7 +4,6 @@ export const getInvoices = () => api.get("/pos/invoices");
 
 export const createInvoice = (data: {
   customer_id: number;
-  created_user_id: number;
   status?: string;
   previous_invoice_id?: number | null;
   paid_amount?: number;
@@ -13,6 +12,8 @@ export const createInvoice = (data: {
   discount_amount?: number;
   box_quantity?: number;
 }) => api.post("/pos/invoice", data);
+
+
 
 export const addInvoiceItem = (
   invoiceId: number,
@@ -26,4 +27,6 @@ export const addInvoiceItem = (
 ) => api.post(`/pos/invoice/${invoiceId}/item`, data);
 
 export const sendInvoice = (invoiceId: number) =>
-  api.post(`/pos/invoice/${invoiceId}/send`);
+  api.patch(`/pos/invoice/${invoiceId}`, {
+    status: "SENT"
+  });
