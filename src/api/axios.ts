@@ -1,11 +1,16 @@
 import axios from "axios";
 
+// Use environment variable, fallback to current path for development
+const baseURL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL 
+  : "/api";
+
 const api = axios.create({
-  baseURL: "/api", // Vite proxy will forward to your Railway backend
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false, // no cookies needed
+  withCredentials: false,
 });
 
 // Attach Authorization token automatically
