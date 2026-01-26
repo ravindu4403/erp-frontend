@@ -1,21 +1,17 @@
+// Temporary axios config for testing
 import axios from "axios";
 
-// Use the environment variable directly
+// Hardcode for production testing
+const baseURL = window.location.hostname.includes('vercel.app')
+  ? "https://jayanthatradersprdbackend-dev.up.railway.app"
+  : "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: false,
-});
-
-// Attach Authorization token automatically
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
 });
 
 export default api;
