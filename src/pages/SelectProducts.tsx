@@ -29,7 +29,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [wholesalePrice, setWholesalePrice] = useState<string>("");
   const [sellingPrice, setSellingPrice] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const outletId = Number(localStorage.getItem("outlet_id")) || 1;
+  
 
   useEffect(() => {
     const fetchItems = async () => {
