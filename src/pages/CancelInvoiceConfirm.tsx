@@ -8,7 +8,7 @@ const CancelInvoiceConfirm = ({
   onClose,
 }: CancelInvoiceConfirmProps) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-10">
       {/* BACKDROP */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -16,21 +16,21 @@ const CancelInvoiceConfirm = ({
       />
 
       {/* MODAL */}
-      <div className="relative w-[85%] max-w-md sm:max-w-lg bg-[#D9D9D9] rounded-[16px] sm:rounded-[20px] p-5 sm:p-6 shadow-xl flex items-center justify-between gap-4 sm:gap-6">
+      <div className="relative w-[1200px] h-[400px] bg-[#D9D9D9] rounded-[40px] p-12 shadow-2xl flex items-center justify-between gap-16">
         
         {/* TEXT */}
-        <div className="text-[20px] sm:text-[24px] md:text-[28px] font-bold text-gray-700 leading-tight">
+        <div className="text-[42px] font-bold text-gray-700 leading-tight">
           Do You Want to
           <br />
           <span className="text-black">Cancel Invoice?</span>
         </div>
 
         {/* BUTTONS */}
-        <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-10">
           {/* YES */}
           <button
             onClick={onConfirm}
-            className="w-24 h-12 sm:w-28 sm:h-14 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white font-bold rounded-[6px] sm:rounded-[8px] shadow hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all"
+            className="w-[300px] h-[120px] bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white font-bold rounded-[20px] shadow hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all text-[42px]"
           >
             YES
           </button>
@@ -38,7 +38,7 @@ const CancelInvoiceConfirm = ({
           {/* NO */}
           <button
             onClick={onClose}
-            className="w-24 h-12 sm:w-28 sm:h-14 bg-gradient-to-b from-[#7CFE96] to-[#1E7A3A] text-white font-bold rounded-[6px] sm:rounded-[8px] shadow hover:from-[#8CFEA6] hover:to-[#2E8A4A] transition-all"
+            className="w-[300px] h-[120px] bg-gradient-to-b from-[#7CFE96] to-[#1E7A3A] text-white font-bold rounded-[20px] shadow hover:from-[#8CFEA6] hover:to-[#2E8A4A] transition-all text-[42px]"
           >
             NO
           </button>

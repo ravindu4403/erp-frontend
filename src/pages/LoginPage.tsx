@@ -122,7 +122,7 @@ function LoginPage() {
           </div>
         )}
         {successMsg && (
-          <div className="w-80 bg-green-700 text-white px-4 py-6 rounded-full text-[22px] font-medium text-center ml-24">
+          <div className="w-90 bg-green-700 text-white px-4 py-7 rounded-full text-[25px] font-medium text-center ml-20">
             Login Successful!
           </div>
         )}

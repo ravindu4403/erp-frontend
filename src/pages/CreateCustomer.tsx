@@ -54,19 +54,19 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
   />
 
   {/* MODAL */}
-  <div className="relative w-full max-w-2xl lg:max-w-3xl bg-[#D9D9D9] rounded-3xl p-6 sm:p-9 shadow-2xl">
+  <div className="relative w-300 h-320 bg-[#D9D9D9] rounded-3xl p-6 sm:p-9 shadow-2xl">
     
     {/* HEADER */}
     <div className="text-center mb-6">
-      <h2 className="text-2xl sm:text-4xl font-bold text-black text-[30px]">Create New Customer</h2>
-      <p className="text-base text-gray-600 text-[21px]">Fill in customer details</p>
+      <h2 className="font-bold text-black text-[50px]">Create New Customer</h2>
+      <p className="text-gray-600 text-[30px]">Fill in customer details</p>
     </div>
 
     {/* FORM */}
     <form onSubmit={handleSubmit} className="space-y-4.5 sm:space-y-6">
       {/* First Name */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           First Name *
         </label>
         <input
@@ -75,14 +75,14 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           value={formData.first_name}
           onChange={handleChange}
           required
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6 py-5 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter first name"
         />
       </div>
 
       {/* Middle Name */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           Middle Name
         </label>
         <input
@@ -90,14 +90,14 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           name="middle_name"
           value={formData.middle_name}
           onChange={handleChange}
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6 py-5 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter middle name (optional)"
         />
       </div>
 
       {/* Last Name */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           Last Name *
         </label>
         <input
@@ -106,14 +106,14 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           value={formData.last_name}
           onChange={handleChange}
           required
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6 py-5 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter last name"
         />
       </div>
 
       {/* Telephone */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           Telephone *
         </label>
         <input
@@ -122,14 +122,14 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           value={formData.telephone}
           onChange={handleChange}
           required
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6 py-5 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter phone number"
         />
       </div>
 
       {/* Address */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           Address
         </label>
         <input
@@ -137,14 +137,14 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           name="address"
           value={formData.address}
           onChange={handleChange}
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6 py-5 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter address"
         />
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[21px]">
+        <label className="block text-base font-medium text-gray-700 mb-1.5 text-[30px]">
           Description
         </label>
         <textarea
@@ -152,24 +152,24 @@ const CreateCustomer = ({ onClose, onCustomerCreated }: CreateCustomerProps) => 
           value={formData.description}
           onChange={handleChange}
           rows={3}
-          className="w-full px-6 py-3 bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[24px]"
+          className="w-full px-6  bg-white rounded-2xl border border-gray-300 focus:ring-3 focus:ring-blue-500 focus:border-blue-500 outline-none text-[29px]"
           placeholder="Enter description (optional)"
         />
       </div>
 
       {/* BUTTONS */}
-      <div className="flex justify-end gap-4.5 pt-6">
+      <div className="flex justify-end gap-4.5 pt-6 mt-[-40px] border-t border-gray-300">
         <button
           type="button"
           onClick={onClose}
-          className="px-7.5 h-15 bg-gray-300 text-black rounded-full font-medium hover:bg-gray-400 transition-all text-[21px]"
+          className="px-7.5 h-20 bg-gray-300 text-black rounded-full font-medium hover:bg-gray-400 transition-all text-[28px]"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-7.5 h-15 bg-[#05522B] text-white rounded-full font-medium hover:bg-[#0E8A2A] transition-all disabled:opacity-50 text-[21px]"
+          className="px-7.5 h-20 bg-[#05522B] text-white rounded-full font-medium hover:bg-[#0E8A2A] transition-all disabled:opacity-50 text-[28px]"
         >
           {loading ? "Creating..." : "Create Customer"}
         </button>

@@ -47,13 +47,13 @@ function MainMenu() {
           </div>
 
           {username && (
-            <h2 className="text-white text-2xl sm:text-3xl font-bold text-center mb-10">
+            <h2 className="text-white text-[40px] font-bold text-center mb-10">
               Hello {username}!
             </h2>
           )}
 
           {/* FIRST ROW */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-100 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-120 justify-items-center ml-[-50px]">
            <MenuCard
   title="Report Time"
   bgColor={
@@ -88,7 +88,7 @@ function MainMenu() {
           </div>
 
           {/* SECOND ROW */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-100 justify-items-center mt-15">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-120 justify-items-center mt-15  ml-[-50px]">
             <MenuCard
               title="Point Of Sales"
               onClick={() => {
@@ -122,14 +122,15 @@ function MainMenu() {
             />
           </div>
 
-          <button
+         
+        </div>
+         <button
             onClick={handleLogout}
-            className="w-80 bg-red-700 text-white px-4 py-8 rounded-[40px] text-[25px] items-center mt-8 hover:bg-red-800 transition-colors justify-center flex mx-auto font-bold"
+            className="w-80 bg-red-700 text-white px-4 py-8 rounded-[40px] text-[35px] items-center mt-15 hover:bg-red-800 transition-colors justify-center flex mx-auto font-bold"
           >
             Logout
           </button>
 
-        </div>
       </div>
     </div>
   );

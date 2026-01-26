@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getItems } from "../api/items";
 import { getStocksByOutlet } from "../api/stocks";
 
@@ -18,6 +18,8 @@ interface Item {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 5; // Show 5 items per page
+
 const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,6 +28,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [quantity, setQuantity] = useState<string>("1");
   const [wholesalePrice, setWholesalePrice] = useState<string>("");
   const [sellingPrice, setSellingPrice] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const outletId = Number(localStorage.getItem("outlet_id")) || 1;
 
   useEffect(() => {
@@ -51,6 +54,18 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
 
     fetchItems();
   }, [search]);
+
+  // Calculate pagination values
+  const totalPages = useMemo(() => {
+    return Math.ceil(items.length / ITEMS_PER_PAGE);
+  }, [items]);
+
+  // Get current page items
+  const currentItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return items.slice(startIndex, endIndex);
+  }, [items, currentPage]);
 
   const handleItemSelect = async (item: Item) => {
     setSelectedItem(item);
@@ -126,6 +141,24 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
     alert("Product added to invoice!");
   };
 
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       {/* BACKDROP */}
@@ -135,9 +168,9 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
       />
 
       {/* MODAL */}
-      <div className="relative w-full max-w-3xl lg:max-w-6xl bg-[#D9D9D9] rounded-3xl sm:rounded-3xl p-6 sm:p-9 shadow-2xl">
+      <div className="relative w-[1700px]  bg-[#D9D9D9] rounded-3xl sm:rounded-3xl p-6 sm:p-9 shadow-2xl overflow-y-auto">
         {/* SEARCH */}
-        <div className="flex items-center bg-white rounded-[18px] px-6 sm:px-9 py-3 sm:py-4.5 mb-6 sm:mb-9">
+        <div className="flex items-center bg-white rounded-[18px] px-6 sm:px-9 py-4.5 sm:py-4.5 mb-6 sm:mb-9">
           <img
             src="./search-products.png"
             alt="Search"
@@ -146,57 +179,140 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
           <input
             type="text"
             placeholder="Search Products..."
-            className="w-full outline-none text-base sm:text-lg bg-transparent placeholder:text-gray-500 text-[24px]"
+            className="w-full h-12 outline-none bg-transparent placeholder:text-gray-500 text-[30px]"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
         {/* TABLE */}
-        <div className="bg-[#A0A0A0] rounded-3xl sm:rounded-3xl overflow-hidden">
+        <div className="bg-[#A0A0A0] h-[500px] sm:rounded-3xl overflow-hidden">
           {/* HEADER */}
-          <div className="grid grid-cols-5 bg-[#2F2F2F] text-sm sm:text-base font-semibold text-white px-4.5 sm:px-6 py-4.5 sm:py-6">
-            <div className="text-center sm:text-left text-[18px]">#</div>
-            <div className="text-center sm:text-left text-[18px]">SKU</div>
-            <div className="text-center sm:text-left text-[18px]">Description</div>
-            <div className="text-center sm:text-left text-[18px]">Item Name</div>
-            <div className="text-center sm:text-left text-[18px]">Outlet</div>
+          <div className="grid grid-cols-5 bg-[#2F2F2F] font-semibold text-white px-4.5 sm:px-6 py-4.5 sm:py-6">
+            <div className="text-center sm:text-left text-[30px]">#</div>
+            <div className="text-center sm:text-left text-[30px]">SKU</div>
+            <div className="text-center sm:text-left text-[30px]">Description</div>
+            <div className="text-center sm:text-left text-[30px]">Item Name</div>
+            <div className="text-center sm:text-left text-[30px]">Outlet</div>
           </div>
 
           {/* ROWS */}
-          <div className="h-54 sm:h-72 overflow-y-auto">
-            {loading && <div className="text-center py-9 text-[24px]">Loading...</div>}
+          <div className="h-[420px] overflow-y-auto">
+            {loading && <div className="text-center py-9 text-[30px]">Loading...</div>}
 
             {!loading && items.length === 0 && (
-              <div className="text-center py-9 text-[24px]">No items found</div>
+              <div className="text-center py-9 text-[30px]">No items found</div>
             )}
 
             {!loading &&
-              items.map((item, i) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleItemSelect(item)}
-                  className={`grid grid-cols-5 text-sm sm:text-base px-4.5 sm:px-6 py-4.5 sm:py-6 border-b border-white/10 hover:bg-white/10 transition-colors cursor-pointer text-[18px] ${selectedItem?.id === item.id ? 'bg-blue-100' : ''}`}
-                >
-                  <div className="text-center sm:text-left text-[18px]">{i + 1}</div>
-                  <div className="text-center sm:text-left font-medium text-[18px]">{item.sku}</div>
-                  <div className="text-center sm:text-left text-[18px]">{item.description}</div>
-                  <div className="text-center sm:text-left text-[18px]">{item.name}</div>
-                  <div className="text-center sm:text-left text-[18px]">{item.origin}</div>
-                </div>
-              ))}
+              currentItems.map((item, i) => {
+                const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + i;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleItemSelect(item)}
+                    className={`grid grid-cols-5 px-4.5 sm:px-6 py-4.5 sm:py-6 border-b border-white/10 hover:bg-white/10 transition-colors cursor-pointer ${selectedItem?.id === item.id ? 'bg-blue-100' : ''}`}
+                  >
+                    <div className="text-center sm:text-left text-[30px]">{globalIndex + 1}</div>
+                    <div className="text-center sm:text-left font-medium text-[30px]">{item.sku}</div>
+                    <div className="text-center sm:text-left text-[30px]">{item.description}</div>
+                    <div className="text-center sm:text-left text-[30px]">{item.name}</div>
+                    <div className="text-center sm:text-left text-[30px]">{item.origin}</div>
+                  </div>
+                );
+              })}
           </div>
         </div>
 
-        {/* PAGINATION */}
+        {/* PAGINATION - UPDATED FOR WORKING PAGINATION */}
         <div className="flex items-center mt-3">
-          <button className="w-12 h-12 sm:w-15 sm:h-15 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black text-[24px]">
+          <button 
+            onClick={goToPrevPage}
+            disabled={currentPage === 1}
+            className="w-16 h-16 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black text-[30px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             ◀
           </button>
+          
+          {/* Page Numbers */}
+          <div className="flex items-center mx-4">
+            {/* First page */}
+            {totalPages > 0 && (
+              <button
+                onClick={() => goToPage(1)}
+                className={`w-12 h-12 mx-1 flex items-center justify-center rounded-full text-[24px] font-bold ${
+                  currentPage === 1 
+                    ? 'bg-gray-400 text-white' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-black'
+                }`}
+              >
+                1
+              </button>
+            )}
+            
+            {/* Ellipsis if needed */}
+            {currentPage > 3 && totalPages > 5 && (
+              <span className="mx-2 text-[24px]">...</span>
+            )}
+            
+            {/* Middle pages */}
+            {Array.from({ length: Math.min(3, totalPages - 2) }, (_, i) => {
+              let pageNum;
+              if (currentPage <= 2) {
+                pageNum = i + 2;
+              } else if (currentPage >= totalPages - 1) {
+                pageNum = totalPages - 3 + i;
+              } else {
+                pageNum = currentPage - 1 + i;
+              }
+              
+              if (pageNum > 1 && pageNum < totalPages) {
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => goToPage(pageNum)}
+                    className={`w-12 h-12 mx-1 flex items-center justify-center rounded-full text-[24px] font-bold ${
+                      currentPage === pageNum 
+                        ? 'bg-gray-400 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-black'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              }
+              return null;
+            })}
+            
+            {/* Ellipsis if needed */}
+            {currentPage < totalPages - 2 && totalPages > 5 && (
+              <span className="mx-2 text-[24px]">...</span>
+            )}
+            
+            {/* Last page if there is more than 1 page */}
+            {totalPages > 1 && (
+              <button
+                onClick={() => goToPage(totalPages)}
+                className={`w-12 h-12 mx-1 flex items-center justify-center rounded-full text-[24px] font-bold ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-400 text-white' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-black'
+                }`}
+              >
+                {totalPages}
+              </button>
+            )}
+          </div>
+          
           <span className="text-base sm:text-lg font-medium text-black mx-4.5 text-[24px]">
-            Page <span className="font-bold">1</span> of <span className="font-bold">1</span>
+            Page <span className="font-bold">{currentPage}</span> of <span className="font-bold">{totalPages || 1}</span>
           </span>
-          <button className="w-12 h-12 sm:w-15 sm:h-15 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black text-[24px]">
+          
+          <button 
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="w-16 h-16 flex items-center justify-center bg-gray-300 hover:bg-gray-400 rounded-full text-black text-[30px] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             ▶
           </button>
         </div>
@@ -207,8 +323,8 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
           <div className="w-full sm:w-auto rounded-3xl sm:rounded-3xl p-4.5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-[21px]">Selected:</span>
-                <span className="text-blue-700 font-bold text-base sm:text-lg text-[24px]">
+                <span className="font-semibold text-[30px]">Selected:</span>
+                <span className="text-blue-700 font-bold text-[30px]">
                   {selectedItem ? selectedItem.sku : "None"}
                 </span>
               </div>
@@ -216,7 +332,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
                 <input
                   type="number"
                   placeholder="Add quantity"
-                  className="w-full sm:w-[250px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[24px]"
+                  className="w-full sm:w-[300px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[30px]"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   min="1"
@@ -229,13 +345,13 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
           <div className="w-full sm:w-auto rounded-3xl sm:rounded-3xl p-4.5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-[21px]">Wholesale Price:</span>
+                <span className="font-semibold text-[30px]">Wholesale Price:</span>
               </div>
               <div className="flex-1 flex items-center gap-3">
                 <input
                   type="number"
                   placeholder="Enter wholesale price"
-                  className="w-full sm:w-[250px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[24px]"
+                  className="w-full sm:w-[300px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[30px]"
                   value={wholesalePrice}
                   onChange={(e) => setWholesalePrice(e.target.value)}
                   step="0.01"
@@ -248,13 +364,13 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
           <div className="w-full sm:w-auto rounded-3xl sm:rounded-3xl p-4.5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-[21px]">Selling Price:</span>
+                <span className="font-semibold text-[30px]">Selling Price:</span>
               </div>
               <div className="flex-1 flex items-center gap-3">
                 <input
                   type="number"
                   placeholder="Enter selling price"
-                  className="w-full sm:w-[250px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[24px]"
+                  className="w-full sm:w-[300px] bg-white px-4.5 sm:px-6 py-3 rounded-[21px] outline-none focus:ring-3 focus:ring-blue-500 text-[30px]"
                   value={sellingPrice}
                   onChange={(e) => setSellingPrice(e.target.value)}
                   step="0.01"
@@ -271,7 +387,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
           <div className="flex gap-4.5 sm:gap-6">
             <button
               onClick={onClose}
-              className="px-9 sm:px-12 h-13.5 sm:h-16.5 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white rounded-full font-medium text-base sm:text-lg hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all flex items-center gap-3 text-[21px]"
+              className="px-9 sm:px-12 h-15.5 sm:h-18.5 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white rounded-full font-medium hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all flex items-center gap-3 text-[30px]"
             >
               CANCEL
             </button>
@@ -279,7 +395,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
             <button
               onClick={handleAddToInvoice}
               disabled={!selectedItem}
-              className="px-9 sm:px-12 h-13.5 sm:h-16.5 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium text-base sm:text-lg hover:from-[#0E8A2A] hover:to-[#065C18] transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-[21px]"
+              className="px-9 sm:px-12 h-15.5 sm:h-18.5 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full font-medium hover:from-[#0E8A2A] hover:to-[#065C18] transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-[30px]"
             >
               <span>ADD</span>
             </button>

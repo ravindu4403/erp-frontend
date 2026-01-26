@@ -68,31 +68,31 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
 
       {/* TOP BAR */}
-      <div className="w-full max-w-6xl lg:max-w-7xl bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2 sm:py-8 mb-4 sm:mb-6">
+      <div className="w-400  bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2 sm:py-7 mb-4 sm:mb-6">
         <button
           onClick={goBack}
-          className="flex items-center gap-2 text-[25px] font-medium text-black"
+          className="flex items-center gap-2 text-[30px] font-medium text-black"
         >
-          <img src="/Polygon.png" className="w-4 h-4 sm:w-10 sm:h-10" alt="Back" />
+          <img src="/Polygon.png" className="w-4 h-4 sm:w-15 sm:h-15" alt="Back" />
           Main menu
         </button>
 
-        <span className="font-bold text-[36px]  text-black">
+        <span className="font-bold text-[46px]  text-black">
           View Stock
         </span>
 
-        <button className="flex items-center gap-2 text-[25px] font-medium text-black opacity-50">
+        <button className="flex items-center gap-2 text-[30px] font-medium text-black opacity-50">
           Main menu
-          <img src="/Polygon 2.png" className="w-4 h-4 sm:w-10 sm:h-10" alt="Next" />
+          <img src="/Polygon 2.png" className="w-4 h-4 sm:w-15 sm:h-15" alt="Next" />
         </button>
       </div>
 
       {/* TABLE */}
-      <div className="w-400  overflow-x-auto">
+      <div className="w-400 h-200 overflow-x-auto">
         <div className="min-w-[2000px] bg-[#2F2F2F] rounded-[5px] overflow-hidden">
 
           {/* HEADER */}
-          <div className="grid grid-cols-17 bg-[#243A9B] text-white text-[20px] font-semibold">
+          <div className="grid grid-cols-17 bg-[#243A9B] text-white text-[30px] font-semibold">
             {[
               "Name", "Sinhala Name", "Type", "Category", "Sub Category", "SKU",
               "Description", "Rack", "Outlet", "Origin",
@@ -106,7 +106,7 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
           </div>
 
           {/* BODY */}
-          <div className="h-[55vh] overflow-y-auto text-[20px] text-white">
+          <div className="h-[55vh] overflow-y-auto text-[30px] text-white">
             {loading ? (
               <div className="grid grid-cols-17 text-center  py-10">
                 <div className="col-span-17 ml-[-350px]">Loading...</div>
@@ -139,7 +139,7 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
         </div>
       </div>
 
-      <div className="text-white">
+      <div className="text-">
       {/* PAGINATION */}
       {totalPages > 1 && (
         <Pagination

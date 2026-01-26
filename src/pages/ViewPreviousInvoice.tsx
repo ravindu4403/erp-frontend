@@ -67,30 +67,30 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
 
       {/* TOP BAR */}
-      <div className="w-250 bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 py-8 mb-6">
+      <div className="w-420 bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 py-10 mb-6">
         <button
           onClick={goBack}
-          className="flex items-center gap-2 text-sm sm:text-base md:text-[27px] font-medium text-black"
+          className="flex items-center gap-2  text-[32px] font-medium text-black"
         >
-          <img src="/Polygon.png" alt="Back" className="w-4 h-4 sm:w-10 sm:h-10" />
+          <img src="/Polygon.png" alt="Back" className="w-4 h-4 sm:w-15 sm:h-15" />
           POS
         </button>
 
-        <span className="font-bold text-[15px] sm:text-xl md:text-[30px] text-black">
+        <span className="font-bold text-[45px]  text-black">
           View Previous Invoice
         </span>
 
-        <button className="flex items-center gap-2 text-sm sm:text-base md:text-[27px] font-medium text-black opacity-50">
+        <button className="flex items-center gap-2 md:text-[32px] font-medium text-black opacity-50">
           POS
-          <img src="/Polygon 2.png" alt="Next" className="w-4 h-4 sm:w-10 sm:h-10" />
+          <img src="/Polygon 2.png" alt="Next" className="w-4 h-4 sm:w-15 sm:h-15" />
         </button>
       </div>
 
       {/* TABLE */}
-      <div className="w-240 bg-[#2F2F2F] rounded-[10px] overflow-hidden mb-6">
+      <div className="w-420 h-250 bg-[#2F2F2F] rounded-[10px] overflow-hidden mb-6">
 
         {/* HEADER */}
-        <div className="grid grid-cols-8 text-[10px] sm:text-[25px] text-white bg-[#3A3A3A] px-3 sm:px-4 py-3 sm:py-4 font-semibold">
+        <div className="grid grid-cols-8 text-[30px]  text-white bg-[#3A3A3A] px-3 sm:px-4 py-3 sm:py-4 font-semibold">
           <div>Invoice No</div>
           <div>Created</div>
           <div>Created By</div>
@@ -102,7 +102,7 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
         </div>
 
         {/* BODY */}
-        <div className="h-[50vh] sm:h-[60vh] overflow-y-auto text-[10px] sm:text-[18px] text-white">
+        <div className=" sm:h-[60vh] overflow-y- text-[25px]  text-white">
 
           {loading && (
             <div className="text-center py-6">Loading...</div>
@@ -161,7 +161,7 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
       </div>
 
 
-      <div className="ml-[-750px] mb-10px text-white">
+      <div className="ml-[-1450px] mb-10px text-white">
       {/* PAGINATION */}
       {totalPages > 1 && (
         <Pagination

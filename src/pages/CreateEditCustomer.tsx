@@ -105,38 +105,38 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
   return (
    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
   {/* TOP BAR */}
-  <div className="w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-[880px] xl:max-w-6xl bg-[#D0D0D0] rounded-full flex items-center justify-between px-4 sm:px-6 py-2 sm:py-8 mb-4 sm:mb-6">
+  <div className="w-350 bg-[#D0D0D0] rounded-full flex items-center justify-between px-4 sm:px-6 py-2 sm:py-10 mb-4 sm:mb-6">
     <button onClick={goBack} className="flex items-center gap-2 font-medium">
-      <img src="/Polygon.png" className="w-8 h-8 sm:w-10 sm:h-10" alt="Back" />
-      <span className="text-sm sm:text-base">POS</span>
+      <img src="/Polygon.png" className="w-8 h-8 sm:w-15 sm:h-15" alt="Back" />
+      <span className="text-[32px]">POS</span>
     </button>
 
-    <span className="font-bold text-lg sm:text-2xl md:text-3xl lg:text-[40px] text-center">
+    <span className="font-bold text-[45px] text-center">
       Create / Edit Customer
     </span>
 
     <button className="opacity-50 flex items-center gap-2">
-      <span className="text-sm sm:text-base">POS</span>
-      <img src="/Polygon 2.png" className="w-8 h-8 sm:w-10 sm:h-10" alt="POS" />
+      <span className="text-[32px]">POS</span>
+      <img src="/Polygon 2.png" className="w-8 h-8 sm:w-15 sm:h-15" alt="POS" />
     </button>
   </div>
 
   {/* FORM */}
-  <div className="w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-[880px] xl:max-w-6xl h-auto min-h-[400px] md:min-h-[450px] bg-[#D0D0D0] rounded-2xl p-4 sm:p-6 mb-6">
+  <div className="w-350 h-150 bg-[#D0D0D0] rounded-2xl p-4 sm:p-6 mb-6">
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
       <input
         name="first_name"
         value={form.first_name}
         onChange={handleChange}
         placeholder="First Name"
-        className="h-9 rounded-full px-4 text-sm sm:text-base"
+        className="h-20 rounded-full px-4 text-[30px] bg-white"
       />
       <input
         name="last_name"
         value={form.last_name}
         onChange={handleChange}
         placeholder="Last Name"
-        className="h-9 rounded-full px-4 text-sm sm:text-base"
+        className="h-20 rounded-full px-4 text-[30px] bg-white"
       />
     </div>
 
@@ -147,7 +147,7 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
         onChange={handleChange}
         placeholder="Address"
         rows={4}
-        className="rounded-xl px-4 py-3 text-sm sm:text-base min-h-[120px] sm:min-h-[140px]"
+        className="rounded-xl px-4 py-3 text-[30px] bg-white"
       />
       <div className="flex flex-col gap-4">
         <input
@@ -155,14 +155,14 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
           value={form.email}
           onChange={handleChange}
           placeholder="Email"
-          className="h-9 rounded-full px-4 text-sm sm:text-base"
+          className="h-20 rounded-full px-4 text-[30px] bg-white mt-2"
         />
         <input
           name="telephone"
           value={form.telephone}
           onChange={handleChange}
           placeholder="Phone"
-          className="h-9 rounded-full px-4 text-sm sm:text-base"
+          className="h-20 rounded-full px-4 text-[30px] bg-white mt-2"
         />
       </div>
     </div>
@@ -173,14 +173,14 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
       onChange={handleChange}
       placeholder="Description"
       rows={3}
-      className="w-full rounded-xl px-4 py-3 mb-6 text-sm sm:text-base min-h-[80px] sm:min-h-[100px]"
+      className="w-full rounded-xl px-4 py-3 text-[30px] bg-white"
     />
 
     <div className="flex justify-end">
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-28 sm:w-32 h-9 sm:h-10 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full text-sm sm:text-base font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="sm:w-45 h-15 mt-4  bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full text-[25px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {editingId ? "UPDATE" : "ADD"}
       </button>
@@ -188,11 +188,11 @@ const CreateEditCustomer = ({ goBack }: CreateEditCustomerProps) => {
   </div>
 
   {/* TABLE CONTAINER */}
-  <div className="w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-[880px] xl:max-w-6xl bg-[#2F2F2F] rounded-xl p-4 sm:p-6">
+  <div className="w-360   bg-[#2F2F2F] rounded-xl p-4 sm:p-6">
     {/* TABLE SCROLL AREA */}
     <div className="overflow-x-auto">
       <div className="overflow-y-auto max-h-[300px] sm:max-h-[350px] md:max-h-[400px]">
-        <table className="min-w-full text-gray-200 text-xs sm:text-sm">
+        <table className="min-w-full text-gray-200 text-[28px]">
           <thead className="bg-[#3A3A3A] sticky top-0">
             <tr>
               <th className="px-3 py-2 text-left">First</th>

@@ -20,7 +20,7 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const res = await getCustomers(currentPage, ITEMS_PER_PAGE, );
+      const res = await getCustomers(currentPage, ITEMS_PER_PAGE);
 
       setCustomers(res.data.data);
       setTotalPages(Math.ceil(res.data.total / res.data.limit));
@@ -51,7 +51,7 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-10">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -59,40 +59,40 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-3xl lg:max-w-6xl bg-[#D9D9D9] rounded-3xl p-6 sm:p-9 shadow-2xl">
+      <div className="relative w-[1600px] h-[1000px] bg-[#D9D9D9] rounded-3xl p-10 shadow-2xl">
 
         {/* Search */}
-        <div className="flex items-center bg-white rounded-full px-6 py-3 mb-6">
+        <div className="flex items-center bg-white rounded-full px-10 py-5 mb-10">
           <img
             src="/add-customer-search.png"
             alt="Search Customer"
-            className="w-8 h-8 mr-3"
+            className="w-16 h-16 mr-5"
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search Customer..."
-            className="w-full outline-none bg-transparent text-xl"
+            className="w-full h-25 outline-none bg-transparent text-[42px] placeholder:text-gray-500"
           />
         </div>
 
         {/* Table */}
-        <div className="bg-[#BFBABA] rounded-3xl overflow-hidden border border-black/30">
-          <div className="grid grid-cols-5 bg-[#9FA8DA] font-semibold text-black">
-            <div className="p-6 border-r border-b border-black/30 text-xl">#</div>
-            <div className="p-6 border-r border-b border-black/30 text-xl">Customer Name</div>
-            <div className="p-6 border-r border-b border-black/30 text-xl">Address</div>
-            <div className="p-6 border-r border-b border-black/30 text-xl">Phone</div>
-            <div className="p-6 border-b border-black/30 text-xl">Description</div>
+        <div className="h-[650px] bg-[#BFBABA] rounded-3xl overflow-hidden border-2 border-black/30">
+          <div className="grid grid-cols-5 bg-[#9FA8DA] font-semibold text-black text-[42px]">
+            <div className="p-8 border-r-2 border-b-2 border-black/30 text-center">#</div>
+            <div className="p-8 border-r-2 border-b-2 border-black/30 text-center">Customer Name</div>
+            <div className="p-8 border-r-2 border-b-2 border-black/30 text-center">Address</div>
+            <div className="p-8 border-r-2 border-b-2 border-black/30 text-center">Phone</div>
+            <div className="p-8 border-b-2 border-black/30 text-center">Description</div>
           </div>
 
-          <div className="h-96 overflow-y-auto bg-white/30">
+          <div className="h-[500px] overflow-y-auto bg-white/30">
             {loading && (
-              <div className="text-center py-10 text-xl">Loading...</div>
+              <div className="text-center py-20 text-[42px] text-gray-600">Loading...</div>
             )}
 
             {!loading && customers.length === 0 && (
-              <div className="text-center py-10 text-xl">
+              <div className="text-center py-20 text-[42px] text-gray-600">
                 No customers found
               </div>
             )}
@@ -101,26 +101,26 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
               <div
                 key={c.id}
                 onClick={() => setSelected(c)}
-                className={`grid grid-cols-5 cursor-pointer text-xl
+                className={`grid grid-cols-5 cursor-pointer text-[38px]
                   ${
                     selected?.id === c.id
                       ? "bg-green-300"
                       : "hover:bg-white/40"
                   }`}
               >
-                <div className="p-6 border-r border-b border-black/20">
+                <div className="p-8 border-r-2 border-b-2 border-black/20 text-center">
                   {i + 1 + (currentPage - 1) * ITEMS_PER_PAGE}
                 </div>
-                <div className="p-6 border-r border-b border-black/20">
+                <div className="p-8 border-r-2 border-b-2 border-black/20 text-center">
                   {c.first_name} {c.last_name}
                 </div>
-                <div className="p-6 border-r border-b border-black/20">
+                <div className="p-8 border-r-2 border-b-2 border-black/20 text-center">
                   {c.address || "-"}
                 </div>
-                <div className="p-6 border-r border-b border-black/20">
+                <div className="p-8 border-r-2 border-b-2 border-black/20 text-center">
                   {c.telephone || "-"}
                 </div>
-                <div className="p-6 border-b border-black/20 truncate">
+                <div className="p-8 border-b-2 border-black/20 text-center truncate">
                   {c.description || "-"}
                 </div>
               </div>
@@ -129,9 +129,9 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+        <div className="flex items-center justify-between mt-10">
           {/* Pagination */}
-          <div className="flex justify-center sm:justify-start text-black">
+          <div className="flex justify-center text-black">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -140,10 +140,10 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-4">
+          <div className="flex gap-10">
             <button
               onClick={onClose}
-              className="px-6 h-12 bg-gray-300 text-black rounded-full text-xl hover:bg-gray-400"
+              className="px-16 h-20 bg-gray-300 rounded-full text-[35px] hover:bg-gray-400 transition-colors min-w-[180px]"
             >
               Cancel
             </button>
@@ -151,7 +151,7 @@ const AddCustomer = ({ onClose, onSelect }: AddCustomerProps) => {
             <button
               disabled={!selected}
               onClick={handleSelect}
-              className="px-8 h-12 bg-[#05522B] text-white rounded-full text-xl disabled:opacity-50"
+              className="px-16 h-20 bg-gradient-to-b from-[#05522B] to-[#023618] text-white rounded-full text-[35px] disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#06622B] hover:to-[#034618] transition-all min-w-[180px]"
             >
               Select
             </button>

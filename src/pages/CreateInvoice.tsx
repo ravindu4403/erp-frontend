@@ -242,78 +242,78 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5">
       {/* Top Bar */}
-      <div className="w-[900px] bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 py-3 mb-4 sm:mb-3">
+      <div className="w-[1000px] bg-[#D9D9D9] rounded-full flex items-center justify-between px-4 sm:px-6 py-8 mb-4 sm:mb-3">
         <button
           onClick={goBack}
-          className="flex items-center gap-2 text-sm sm:text-base md:text-[27px] text-black"
+          className="flex items-center gap-2 text-sm sm:text-base md:text-[29px] text-black"
         >
-          <img src="/Polygon.png" alt="Back" className="w-5 h-5 sm:w-10 sm:h-10" />
+          <img src="/Polygon.png" alt="Back" className="w-5 h-5 sm:w-12 sm:h-12" />
           POS
         </button>
-        <span className="font-bold text-lg sm:text-xl md:text-[45px] text-black">
+        <span className="font-bold text-lg sm:text-xl md:text-[48px] text-black">
           Create New Invoice
         </span>
-        <button className="flex items-center gap-2 text-sm sm:text-base md:text-[27px] text-black opacity-50">
+        <button className="flex items-center gap-2 text-sm sm:text-base md:text-[29px] text-black opacity-50">
           POS
-          <img src="/Polygon 2.png" alt="Next" className="w-5 h-5 sm:w-10 sm:h-10" />
+          <img src="/Polygon 2.png" alt="Next" className="w-5 h-5 sm:w-12 sm:h-12" />
         </button>
       </div>
 
       {/* Main Content */}
       <div className="w-full max-w-2xl">
         {/* Action Buttons Row */}
-        <div className="w-200 ml-[-60px] flex sm:flex-row gap-3 sm:gap-5 sm:mb-3 items-center justify-center">
+        <div className="w-240 ml-[-140px] flex sm:flex-row gap-3 sm:gap-5 sm:mb-3 items-center justify-center">
           <button
             onClick={() => setShowRecall(true)}
-            className="sm:w-205 h-12 sm:h-25 bg-gradient-to-b from-[#9BF5AD] via-[#4AED80] to-[#053E0A] text-white rounded-full font-bold text-sm sm:text-base md:text-[30px]"
+            className="sm:w-205 h-15 sm:h-30 bg-gradient-to-b from-[#9BF5AD] via-[#4AED80] to-[#053E0A] text-white rounded-full font-bold text-sm sm:text-base md:text-[35px]"
           >
             Recall Invoice
           </button>
 
           <button
             onClick={() => setShowCancelConfirm(true)}
-            className="sm:w-205 h-12 sm:h-25 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white rounded-full font-medium text-sm sm:text-base md:text-[30px]"
+            className="sm:w-205 h-12 sm:h-30 bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white rounded-full font-medium text-sm sm:text-base md:text-[35px]"
           >
             Cancel Invoice
           </button>
         </div>
 
         {/* Customer & Info Card */}
-        <div className="sm:w-205 sm:h-80 bg-gradient-to-b from-[#D9D9D9] via-[#827E7E] to-[#676464] rounded-[40px] p-3 sm:p-4 mb-4 sm:mb-3 ml-[-75px]">
+        <div className="sm:w-240 sm:h-90 bg-gradient-to-b from-[#D9D9D9] via-[#827E7E] to-[#676464] rounded-[40px] p-3 sm:p-4 mb-4 sm:mb-3 ml-[-145px]">
           <div className="w-full flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Customer Buttons */}
             <div className="flex flex-row gap-3 sm:gap-4">
               <button
                 onClick={() => setShowAddCustomer(true)}
-                className="flex-1 sm:w-20 sm:h-73 bg-gradient-to-b from-[#9BF5A3] via-[#72ED4A] to-[#023B06] text-white rounded-[50px] font-medium flex flex-col items-center justify-center gap-2"
+                className="flex-1 sm:w-35 sm:h-83 bg-gradient-to-b from-[#9BF5A3] via-[#72ED4A] to-[#023B06] text-white rounded-[50px] font-medium flex flex-col items-center justify-center gap-2"
               >
                 <img
                   src="/lets-icons_user-alt-fill.png"
                   alt="Add Customer"
-                  className="w-8 h-8 sm:w-30 sm:h-30"
+                  className="w-8 h-8 sm:w-35 sm:h-35"
                 />
-                <span className="text-xs sm:text-[25px] text-center">
+                <span className="text-xs sm:text-[30px] text-center">
                   Add<br />Customer
                 </span>
               </button>
 
               <button
                 onClick={() => setShowCreateCustomer(true)}
-                className="flex-1 sm:w-80 sm:h-73 bg-gradient-to-b from-[#A19BF5] via-[#4A5DED] to-[#02043B] text-white rounded-[50px] font-medium flex flex-col items-center justify-center gap-2"
+                className="flex-1 sm:w-80 sm:h-83 bg-gradient-to-b from-[#A19BF5] via-[#4A5DED] to-[#02043B] text-white rounded-[50px] font-medium flex flex-col items-center justify-center gap-2"
               >
                 <img
                   src="/typcn_user-add.png"
                   alt="Create Customer"
-                  className="w-8 h-8 sm:w-30 sm:h-30"
+                  className="w-8 h-8 sm:w-35 sm:h-35 ml-5"
                 />
-                <span className="text-xs sm:text-[25px] text-center">
+                <span className="text-xs sm:text-[30px] text-center">
                   Create<br />Customer
                 </span>
               </button>
             </div>
 
             {/* Right Side Info */}
-            <div className="flex-1 text-xs sm:text-[26px] text-white ml-5 mt-12">
+            <div className="flex-1 text-xs sm:text-[29px] text-white ml-15 mt-10">
               {/* Bill For - Customer Name */}
               <div className="flex flex-col sm:flex-row mb-2">
                 <span className="font-semibold w-24 sm:w-28">Bill For</span>
@@ -374,15 +374,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         {/* Add Items Button */}
         <button
           onClick={() => setShowProducts(true)}
-          className="sm:w-205 sm:h-25 items-center ml-[-75px] justify-center bg-gradient-to-b from-[#807CFE] via-[#574AED] to-[#0A053E] text-white rounded-full font-bold text-sm sm:text-base md:text-[30px] mb-4 sm:mb-3"
+          className="sm:w-230 sm:h-32 items-center ml-[-125px] justify-center bg-gradient-to-b from-[#807CFE] via-[#574AED] to-[#0A053E] text-white rounded-full font-bold text-sm sm:text-base md:text-[35px] mb-4 sm:mb-3"
         >
           Add Items To Invoice
         </button>
 
         {/* ITEMS TABLE */}
-        <div className="h-[70vh] sm:w-205 sm:h-[40vh] bg-[#2F2F2F] rounded-lg overflow-hidden mb-4 sm:mb-3 flex flex-col ml-[-75px]">
+        <div className="h-[70vh] sm:w-240 sm:h-[40vh] bg-[#2F2F2F] rounded-lg overflow-hidden mb-4 sm:mb-3 flex flex-col ml-[-155px]">
           {/* Table Header */}
-          <div className="grid grid-cols-7 gap-4 text-[20px] sm:text-[23px] text-white bg-[#3A3A3A] px-2 sm:px-3 py-2 font-semibold">
+          <div className="grid grid-cols-7 gap-4  sm:text-[30px] text-white bg-[#3A3A3A] px-2 sm:px-3 py-2 ">
             <div>Item<br />No</div>
             <div>SKU</div>
             <div>Item Name</div>
@@ -393,14 +393,14 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
           </div>
 
           {/* Table Body */}
-          <div className="flex-1 overflow-y-auto text-[10px] sm:text-[13px] text-white">
+          <div className="flex-1 overflow-y-auto text-[20px] sm:text-[23px] text-white">
             {invoiceItems.length === 0 ? (
-              <div className="text-center text-[20px] py-8 text-gray-400">
+              <div className="text-center text-[30px] py-8 text-gray-400">
                 No items added. Click "Add Items To Invoice" to add products.
               </div>
             ) : (
               invoiceItems.map((item, i) => (
-                <div key={item.id} className="grid grid-cols-7 px-2 text-[15px] sm:px-3 py-2 border-b border-white/10">
+                <div key={item.id} className="grid grid-cols-7 px-2 text-[25px] sm:px-3 py-2 border-b border-white/10">
                   <div>{i + 1}</div>
                   <div>{item.sku}</div>
                   <div>{item.name}</div>
@@ -432,7 +432,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
           </div>
 
           {/* Bottom Summary */}
-          <div className="flex w-full text-[10px] sm:text-[23px] font-semibold">
+          <div className="flex w-full text-[10px] sm:text-[30px] font-semibold">
             <div className="w-1/2 bg-[#1E40FF] text-white px-3 sm:px-4 py-2 sm:py-3">
               Total Item count<br />- {itemCount}
             </div>
@@ -448,7 +448,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         <button
           onClick={() => setShowSendConfirm(true)}
           disabled={!selectedCustomer || invoiceItems.length === 0}
-          className="sm:w-205 sm:h-25 items-center ml-[-75px] justify-center bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-full font-bold text-sm sm:text-base md:text-[30px] flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="sm:w-230  sm:h-32 items-center ml-[-135px] justify-center bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-full font-bold text-sm sm:text-base md:text-[35px] flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Send Invoice to cashier
           <span className="text-lg sm:text-[32px]">➤</span>

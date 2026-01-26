@@ -20,7 +20,7 @@ interface Invoice {
   discount_type: string;
   discount_amount: number;
   next_box_number: number;
-  invoice_no?: string; // Added this field
+  invoice_no?: string;
   created_user?: {
     username: string;
     first_name: string;
@@ -33,7 +33,7 @@ interface Invoice {
     address?: string;
     telephone?: string;
   };
-  invoice_items?: any[]; // Added this field for items
+  invoice_items?: any[];
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -45,16 +45,14 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-  // Fetch invoices
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
         setLoading(true);
         const res = await getInvoices();
         
-        console.log("Invoices API Response:", res); // Debug log
+        console.log("Invoices API Response:", res);
         
-        // Check different possible response structures
         let invoicesData: Invoice[] = [];
         
         if (Array.isArray(res.data)) {
@@ -62,17 +60,15 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
         } else if (Array.isArray(res.data?.data)) {
           invoicesData = res.data.data;
         } else if (res.data?.data && typeof res.data.data === 'object') {
-          // If data is an object with invoices property
           invoicesData = res.data.data.invoices || [];
         } else if (res.data && typeof res.data === 'object') {
-          // Try to extract array from object values
           const values = Object.values(res.data);
           if (values.length > 0 && Array.isArray(values[0])) {
             invoicesData = values[0] as Invoice[];
           }
         }
         
-        console.log("Parsed invoices:", invoicesData); // Debug log
+        console.log("Parsed invoices:", invoicesData);
         setInvoices(invoicesData);
         
       } catch (err) {
@@ -86,7 +82,6 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
     fetchInvoices();
   }, []);
 
-  // Filter invoices
   const filteredInvoices = invoices.filter((invoice) =>
     invoice.id.toString().includes(search) ||
     (invoice.invoice_no && invoice.invoice_no.toLowerCase().includes(search.toLowerCase())) ||
@@ -101,12 +96,10 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
         .includes(search.toLowerCase()))
   );
 
-  // Reset page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // Pagination calculations
   const totalPages = Math.max(
     1,
     Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE)
@@ -124,9 +117,8 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
       return;
     }
 
-    console.log("Selected invoice for recall:", selectedInvoice); // Debug log
+    console.log("Selected invoice for recall:", selectedInvoice);
     
-    // Call the onSelect callback with the selected invoice
     if (onSelect) {
       onSelect(selectedInvoice);
     } else {
@@ -136,40 +128,44 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-8">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl lg:max-w-6xl bg-[#D9D9D9] rounded-3xl p-6 sm:p-9 shadow-2xl">
+      <div className="relative w-[1600px] h-[1000px] bg-[#D9D9D9] rounded-3xl p-10 shadow-2xl">
         {/* Search */}
-        <div className="flex items-center bg-white rounded-full px-6 py-3 mb-6">
-          <img src="/search.png" alt="Search" className="w-7 h-7 mr-3" />
+        <div className="flex items-center bg-white rounded-full px-10 py-5 mb-10">
+          <img src="/search.png" alt="Search" className="w-16 h-16 mr-5" />
           <input
             type="text"
             placeholder="Search Invoice..."
-            className="w-full outline-none bg-transparent text-xl"
+            className="w-full h-25 outline-none bg-transparent text-[42px] placeholder:text-gray-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Table */}
-        <div className="bg-[#BFBABA] rounded-3xl overflow-hidden">
-          <div className="grid grid-cols-5 bg-[#9FA8DA] text-sm sm:text-base font-semibold text-black px-4.5 sm:px-6 py-4.5 sm:py-6">
-            <div className="text-center sm:text-left">#</div>
-            <div className="text-center sm:text-left">Created At</div>
-            <div className="text-center sm:text-left">Invoice No</div>
-            <div className="text-center sm:text-left">Created By</div>
-            <div className="text-center sm:text-left">Customer</div>
+        {/* Table - Optimized for 5 columns */}
+        <div className="h-[650px] bg-[#BFBABA] rounded-3xl overflow-hidden">
+          <div className="grid grid-cols-5 bg-[#9FA8DA] text-[42px] font-semibold text-black px-10 py-6">
+            <div className="text-center">#</div>
+            <div className="text-center">Created At</div>
+            <div className="text-center">Invoice No</div>
+            <div className="text-center">Created By</div>
+            <div className="text-center">Customer</div>
           </div>
 
-          <div className="h-72 sm:h-96 overflow-y-auto">
-            {loading && <div className="text-center py-9 text-xl">Loading...</div>}
+          <div className="h-[500px] overflow-y-auto">
+            {loading && (
+              <div className="text-center py-20 text-[42px] text-gray-600">
+                Loading...
+              </div>
+            )}
 
             {!loading && paginatedInvoices.length === 0 && (
-              <div className="text-center py-9 text-xl">
+              <div className="text-center py-20 text-[42px] text-gray-600">
                 {filteredInvoices.length === 0 ? "No invoices found" : "No results for your search"}
               </div>
             )}
@@ -179,28 +175,28 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
                 <div
                   key={inv.id}
                   onClick={() => setSelectedInvoice(inv)}
-                  className={`grid grid-cols-5 text-sm sm:text-base px-4.5 sm:px-6 py-4.5 sm:py-6 border-b border-black/20 hover:bg-white/30 transition-colors cursor-pointer text-xl ${selectedInvoice?.id === inv.id ? "bg-green-300" : ""}`}
+                  className={`grid grid-cols-5 text-[38px] px-10 py-6 border-b-2 border-black/20 hover:bg-white/30 transition-colors cursor-pointer ${selectedInvoice?.id === inv.id ? "bg-green-300" : ""}`}
                 >
-                  <div className="font-medium text-center sm:text-left">
+                  <div className="font-medium text-center">
                     {startIndex + i + 1}
                   </div>
-                  <div className="text-center sm:text-left">
+                  <div className="text-center">
                     {new Date(inv.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric'
                     })}
                   </div>
-                  <div className="font-semibold text-blue-700 text-center sm:text-left">
+                  <div className="font-semibold text-blue-700 text-center">
                     {inv.invoice_no || `INV-${inv.id}`}
                   </div>
-                  <div className="text-center sm:text-left">
+                  <div className="text-center">
                     {inv.created_user 
                       ? `${inv.created_user.first_name} ${inv.created_user.last_name}`
                       : `User ${inv.created_user_id}`
                     }
                   </div>
-                  <div className="text-center sm:text-left">
+                  <div className="text-center">
                     {inv.customer 
                       ? `${inv.customer.first_name} ${inv.customer.last_name}`
                       : `Customer ${inv.customer_id}`
@@ -212,9 +208,9 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-          {/* Pagination */}
-          <div className="flex justify-center sm:justify-start text-black">
+        <div className="flex items-center justify-between mt-10">
+          {/* Pagination - Slightly smaller */}
+          <div className="flex justify-center text-black">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -223,10 +219,10 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-6">
+          <div className="flex gap-10">
             <button
               onClick={onClose}
-              className="px-9 h-16 bg-gray-300 rounded-full text-xl hover:bg-gray-400 transition-colors"
+              className="px-16 h-20 bg-gray-300 rounded-full text-[35px] hover:bg-gray-400 transition-colors min-w-[180px]"
             >
               Cancel
             </button>
@@ -234,7 +230,7 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
             <button
               onClick={handleRecallInvoice}
               disabled={!selectedInvoice}
-              className="px-9 h-16 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#0E8A2A] hover:to-[#065C18] transition-all"
+              className="px-16 h-20 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full text-[35px] disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#0E8A2A] hover:to-[#065C18] transition-all min-w-[280px]"
             >
               Recall Invoice
             </button>
