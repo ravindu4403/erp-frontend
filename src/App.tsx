@@ -15,8 +15,8 @@ function App() {
 
   useEffect(() => {
     const calcScale = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      const vw = window.visualViewport?.width ?? window.innerWidth;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
 
       // Fit without scrolling; do not upscale above 1.
       const s = Math.min(vw / DESIGN.w, vh / DESIGN.h, 1);
