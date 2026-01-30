@@ -7,7 +7,7 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
-import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById } from "../api/invoice";
+import { createInvoice, addInvoiceItem, sendInvoice, safeUpdateInvoiceStatus } from "../api/invoice";
 
 /* ================= TOKEN HELPERS ================= */
 const getUserFromToken = () => {
@@ -68,6 +68,11 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [previousInvoiceId, setPreviousInvoiceId] = useState<number | null>(null);
   const [lastCreatedInvoiceNo, setLastCreatedInvoiceNo] = useState<string | null>(null);
 
+  // Draft invoice saved when the user leaves without sending.
+  const [draftInvoiceId, setDraftInvoiceId] = useState<number | null>(null);
+  const [draftInvoiceNo, setDraftInvoiceNo] = useState<string | null>(null);
+  const [lastSavedDraftHash, setLastSavedDraftHash] = useState<string>("");
+
   /* ================= TOTALS ================= */
   const subtotal = invoiceItems.reduce(
     (acc, item) => acc + (item.unitPrice * item.qty),
@@ -96,15 +101,6 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
   };
 
-  // ✅ When starting a brand-new invoice, clear the previous 'last sent' display
-  const clearLastCreatedIfStartingNew = () => {
-    if (lastCreatedInvoiceNo && !previousInvoiceId) {
-      setLastCreatedInvoiceNo(null);
-      setInvoiceNumber("AUTO");
-      setQty("0");
-    }
-  };
-
   /* ================= AUTO GENERATE INVOICE NO ================= */
   useEffect(() => {
     if (!lastCreatedInvoiceNo && selectedCustomer && invoiceItems.length > 0 && invoiceNumber === "AUTO") {
@@ -116,15 +112,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     }
   }, [selectedCustomer, invoiceItems, invoiceNumber, lastCreatedInvoiceNo]);
 
-  const handleRecallInvoice = async (invoice: any) => {
-    try {
-      if (!invoice?.invoice_items || invoice.invoice_items.length === 0) {
-        const res = await getInvoiceById(invoice.id);
-        invoice = (res.data?.data ?? res.data) || invoice;
-      }
-    } catch (e) {
-      console.warn("Could not fetch full invoice for recall", e);
-    }
+  const handleRecallInvoice = (invoice: any) => {
     console.log("Recalled invoice for state update:", invoice);
     setPreviousInvoiceId(invoice.id);
     setInvoiceNumber(invoice.invoice_no || `INV-${invoice.id}`);
@@ -169,12 +157,6 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     try {
       // Parse qty to number, default to 0 if empty/invalid
       const boxQty = parseInt(qty) || 0;
-
-      // ✅ Bag/Box Qty must be at least 1
-      if (!Number.isFinite(boxQty) || boxQty < 1) {
-        alert("Bag/Box Qty must be at least 1");
-        return;
-      }
 
       const invoicePayload: any = {
         customer_id: selectedCustomer.id,
@@ -285,10 +267,114 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
   // Display invoice number - priority: lastCreated > currentDraft > AUTO
   const getDisplayNo = () => {
-    if (lastCreatedInvoiceNo) return `PENDING: ${lastCreatedInvoiceNo}`;
-    if (invoiceNumber && invoiceNumber !== "AUTO") return ` ${invoiceNumber}`;
+    // Show the current invoice number if we recalled an invoice.
+    if (invoiceNumber && invoiceNumber !== "AUTO") return invoiceNumber;
+
+    // If we auto-saved a draft, show its invoice number.
+    if (draftInvoiceNo) return draftInvoiceNo;
+
+    // Default for a brand-new invoice.
     return "AUTO";
   };
+
+
+// Create a stable hash of the current draft. Used to avoid re-saving the same data repeatedly.
+const buildDraftHash = () => {
+  const customerId = selectedCustomer?.id ?? selectedCustomer?.customer_id;
+  const items = invoiceItems.map((it: any) => ({
+    stockId: it?.stock_id ?? it?.stockId ?? it?.stock?.id ?? it?.stock?.stock_id,
+    qty: Number(it?.quantity ?? it?.qty ?? 0),
+    price: Number(it?.unitPrice ?? it?.unit_price ?? 0),
+  }));
+  return JSON.stringify({ customerId, items, qty: Number(qty || 0) });
+};
+
+// Save the invoice as ACTIVE if the user leaves without sending.
+const handleBack = async () => {
+  try {
+    // If there is nothing to save, just go back.
+    if (!selectedCustomer || invoiceItems.length === 0) {
+      goBack();
+      return;
+    }
+
+    const bagQty = Number(qty || 0);
+    const draftHash = buildDraftHash();
+
+    // Avoid duplicate saves when the draft data hasn't changed.
+    if (draftHash === lastSavedDraftHash && draftInvoiceId) {
+      goBack();
+      return;
+    }
+
+    // Create the invoice once, then add items.
+    // Prefer ACTIVE so it can be managed separately from sent-to-cashier invoices.
+    let invoiceId = draftInvoiceId;
+    let invoiceNo = draftInvoiceNo;
+
+    if (!invoiceId) {
+      const createdRes = await createInvoice({
+        customer_id: selectedCustomer.id,
+        status: "ACTIVE",
+        previous_invoice_id: previousInvoiceId ?? null,
+        paid_amount: 0,
+        total_amount: total,
+        discount_type: discountType,
+        discount_amount: discountAmount,
+        next_box_number: bagQty,
+        created_user_id: loggedInUser.id,
+      });
+
+      const created = createdRes.data?.data ?? createdRes.data;
+      invoiceId = created?.id;
+      invoiceNo = created?.invoice_no ?? created?.invoiceNo ?? null;
+
+      // Fallback: if ACTIVE is not supported by the backend, try PENDING.
+      if (!invoiceId) {
+        const createdRes2 = await createInvoice({
+          customer_id: selectedCustomer.id,
+          status: "PENDING",
+          previous_invoice_id: previousInvoiceId ?? null,
+          paid_amount: 0,
+          total_amount: total,
+          discount_type: discountType,
+          discount_amount: discountAmount,
+          next_box_number: bagQty,
+          created_user_id: loggedInUser.id,
+        });
+        const created2 = createdRes2.data?.data ?? createdRes2.data;
+        invoiceId = created2?.id;
+        invoiceNo = created2?.invoice_no ?? created2?.invoiceNo ?? null;
+      }
+
+      if (invoiceId) {
+        setDraftInvoiceId(invoiceId);
+        setDraftInvoiceNo(invoiceNo);
+      }
+    }
+
+    if (invoiceId) {
+      // Add items (best-effort). If the backend merges line-items by stock_id, this updates quantities;
+      // otherwise it appends new lines. We avoid frequent saves using the hash above.
+      for (const item of invoiceItems) {
+        await addInvoiceItem(invoiceId, {
+          stock_id: item.stock_id,
+          quantity: item.quantity,
+          selling_price: item.unitPrice,
+          discount_type: item.discount_type || "FIXED",
+          discount_amount: item.discount_amount || 0,
+        });
+      }
+
+      setLastSavedDraftHash(draftHash);
+    }
+  } catch (err) {
+    console.error("Auto-save draft invoice failed", err);
+    // Even if saving fails, allow navigation to avoid trapping the user.
+  } finally {
+    goBack();
+  }
+};
   const displayInvoiceNumber = getDisplayNo();
 
   return (
@@ -297,7 +383,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       {/* Top Bar */}
       <div className="w-full bg-[#D9D9D9] rounded-full flex items-center justify-between px-6 py-8 mb-4">
         <button
-          onClick={goBack}
+          onClick={handleBack}
           className="flex items-center gap-2 text-[29px] text-black"
         >
           <img src="/Polygon.png" alt="Back" className="w-12 h-12" />
@@ -337,7 +423,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
             {/* Customer Buttons - Left Side */}
             <div className="flex flex-row gap-6">
               <button
-                onClick={() => { clearLastCreatedIfStartingNew(); setShowAddCustomer(true); }}
+                onClick={() => setShowAddCustomer(true)}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#9BF5A3] via-[#72ED4A] to-[#023B06] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -351,7 +437,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
               </button>
 
               <button
-                onClick={() => { clearLastCreatedIfStartingNew(); setShowCreateCustomer(true); }}
+                onClick={() => setShowCreateCustomer(true)}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#A19BF5] via-[#4A5DED] to-[#02043B] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -426,7 +512,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
         {/* Add Items Button */}
         <button
-          onClick={() => { clearLastCreatedIfStartingNew(); setShowProducts(true); }}
+          onClick={() => setShowProducts(true)}
           disabled={!selectedCustomer}
           className={`w-full h-[110px] rounded-full font-bold text-[35px] mb-8 transition-all shadow-lg flex items-center justify-center gap-4 ${!selectedCustomer
             ? "bg-gray-500 cursor-not-allowed opacity-50"
@@ -511,15 +597,8 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
         {/* Send to cashier */}
         <button
-          onClick={() => {
-                const boxQty = parseInt(qty || "0");
-                if (!Number.isFinite(boxQty) || boxQty < 1) {
-                  alert("Bag/Box Qty must be at least 1");
-                  return;
-                }
-                setShowSendConfirm(true);
-              }}
-          disabled={!selectedCustomer || invoiceItems.length === 0 || parseInt(qty || "0") < 1}
+          onClick={() => setShowSendConfirm(true)}
+          disabled={!selectedCustomer || invoiceItems.length === 0}
           className="w-full h-[110px] bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-full font-bold text-[40px] flex items-center justify-center gap-6 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform shadow-xl mb-8"
         >
           Send Invoice to cashier

@@ -27,6 +27,11 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [quantity, setQuantity] = useState<string>("1");
   const [wholesalePrice, setWholesalePrice] = useState<string>("");
+
+  // Keep wholesale price equal to selling price across the UI.
+  useEffect(() => {
+    setWholesalePrice(sellingPrice);
+  }, [sellingPrice]);
   const [sellingPrice, setSellingPrice] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [availableStock, setAvailableStock] = useState<number>(0);
@@ -340,7 +345,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
               placeholder="Price"
               className="w-24 sm:w-28 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px] ml-3"
               value={wholesalePrice}
-              onChange={(e) => setWholesalePrice(e.target.value)}
+              readOnly
               step="0.01"
             />
           </div>

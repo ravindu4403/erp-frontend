@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import api from "../api/axios";
+import { useState, useEffect } from "react";
+import api from "../api/axios"; // make sure this is your axios instance
 import Pagination from "../components/Pagination";
 
 interface ViewStockProps {
-  goBack: () => void;
+  goBack: () => void; // Function to navigate back to the main menu
 }
 
 interface Stock {
@@ -27,82 +27,92 @@ interface Stock {
   status?: string;
 }
 
-const getStocksPage = async (take = 200, skip = 0) => {
-  return api.get("/store/stocks", { params: { take, skip } });
+// API call
+const getStocks = async (take = 20, skip = 0, name = "") => {
+  return api.get("/store/stocks", { params: { take, skip, name } });
 };
 
+// Unify page state
 const ViewStock = ({ goBack }: ViewStockProps) => {
+  // Unify page state
   const [loading, setLoading] = useState(false);
-  const [stocks, setStocks] = useState<Stock[]>([]);
-  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
 
   const take = 20;
 
-  const loadAllStocks = async () => {
+  const loadStocks = async (pageNumber: number, searchQuery = search) => {
     try {
       setLoading(true);
 
-      const PAGE_SIZE = 200;
-      let skip = 0;
-      let all: Stock[] = [];
+      // When searching, load more rows in a single request so we can filter by item name / SKU / description.
+      const query = (searchQuery || "").trim();
+      const effectiveTake = query ? 500 : take;
+      const skip = query ? 0 : (pageNumber - 1) * take;
 
-      // ✅ loop pages until backend returns less than PAGE_SIZE
-      for (let i = 0; i < 50; i++) {
-        const res = await getStocksPage(PAGE_SIZE, skip);
+      const res = await getStocks(effectiveTake, skip, query);
 
-        const pageData: Stock[] = Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
-          ? res.data.data
-          : [];
+      // Normalize common backend response shapes:
+      // - { data: [...], total: number }
+      // - { data: { data: [...], total: number } }
+      const raw = res.data?.data ?? res.data;
+      const list = raw?.data ?? raw ?? [];
+      const totalCount =
+        raw?.total ??
+        raw?.meta?.total ??
+        raw?.pagination?.total ??
+        raw?.count ??
+        (Array.isArray(list) ? list.length : 0);
 
-        all = [...all, ...pageData];
+      // Client-side search across multiple fields (name, sku, description)
+      const q = query.toLowerCase();
+      const filtered = q
+        ? (Array.isArray(list) ? list : []).filter((s: any) => {
+            const name = s?.item?.name ?? s?.name ?? "";
+            const sku = s?.item?.sku ?? s?.sku ?? "";
+            const desc = s?.item?.description ?? s?.description ?? "";
 
-        if (pageData.length < PAGE_SIZE) break;
-        skip += PAGE_SIZE;
-      }
+  const isSearching = (search || "").trim().length > 0;
+  const displayedStocks = isSearching
+    ? stocks.slice((currentPage - 1) * take, currentPage * take)
+    : stocks;
 
-      setStocks(all);
+return (
+              String(name).toLowerCase().includes(q) ||
+              String(sku).toLowerCase().includes(q) ||
+              String(desc).toLowerCase().includes(q)
+            );
+          })
+        : (Array.isArray(list) ? list : []);
+
+      setStocks(filtered);
+      setTotal(query ? filtered.length : totalCount);
     } catch (err) {
-      console.error("Error loading stocks:", err);
-      setStocks([]);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAllStocks();
-  }, []);
-
-  // Reset to page 1 when searching
-  useEffect(() => {
-    const t = setTimeout(() => setCurrentPage(1), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => {
+      loadStocks(1, search);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [search]);
 
-  const filteredStocks = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return stocks;
+  useEffect(() => {
+    loadStocks(currentPage);
+  }, [currentPage]);
 
-    return stocks.filter((s) => {
-      const name = (s.name || "").toLowerCase();
-      const sku = (s.sku || "").toLowerCase();
-      const other = (s.other_name || "").toLowerCase();
-      return name.includes(q) || sku.includes(q) || other.includes(q);
-    });
-  }, [stocks, search]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredStocks.length / take));
-
-  const pagedStocks = useMemo(() => {
-    const start = (currentPage - 1) * take;
-    return filteredStocks.slice(start, start + take);
-  }, [filteredStocks, currentPage]);
+  const totalPages = Math.ceil(total / take) || 1;
 
   return (
     <div className="w-[1200px] h-[1920px] bg-black flex flex-col items-center p-10 mx-auto overflow-hidden">
+
       {/* TOP BAR */}
       <div className="w-full shrink-0 bg-[#D9D9D9] rounded-full flex items-center justify-between px-6 py-8 mb-10">
         <button
@@ -113,7 +123,9 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
           Main menu
         </button>
 
-        <span className="font-bold text-[48px] text-black">View Stock</span>
+        <span className="font-bold text-[48px] text-black">
+          View Stock
+        </span>
 
         <button className="flex items-center gap-2 text-[29px] text-black opacity-50">
           Main menu
@@ -123,14 +135,10 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
 
       {/* SEARCH BAR */}
       <div className="w-full max-w-[1100px] bg-white rounded-full flex items-center px-8 py-5 mb-10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] border-2 border-white/20">
-        <img
-          src="/search.png"
-          alt="Search"
-          className="w-12 h-12 mr-6 opacity-60"
-        />
+        <img src="/search.png" alt="Search" className="w-12 h-12 mr-6 opacity-60" />
         <input
           type="text"
-          placeholder="Search items by name / sku..."
+          placeholder="Search items by name..."
           className="w-full bg-transparent outline-none text-[35px] text-black placeholder:text-gray-400 font-medium"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -140,31 +148,16 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
       {/* TABLE CONTAINER */}
       <div className="w-full flex-1 flex flex-col items-center overflow-hidden mb-8">
         <div className="w-full max-w-[1100px] h-full overflow-x-auto border border-white/20 rounded-[30px] bg-[#2F2F2F] shadow-2xl flex flex-col">
+
           {/* HEADER */}
           <div className="min-w-[2800px] bg-[#243A9B] text-white text-[32px] font-bold grid grid-cols-17 sticky top-0">
             {[
-              "Name",
-              "Sinhala Name",
-              "Type",
-              "Category",
-              "Sub Category",
-              "SKU",
-              "Description",
-              "Rack",
-              "Outlet",
-              "Origin",
-              "Buying Price",
-              "Retail Price",
-              "Wholesale Price",
-              "Quantity",
-              "Unit",
-              "Created At",
-              "Status",
+              "Name", "Sinhala Name", "Type", "Category", "Sub Category", "SKU",
+              "Description", "Rack", "Outlet", "Origin",
+              "Buying Price", "Retail Price", "Wholesale Price",
+              "Quantity", "Unit", "Created At", "Status"
             ].map((h, i) => (
-              <div
-                key={i}
-                className="px-4 py-6 border-r border-white/20 truncate text-center"
-              >
+              <div key={i} className="px-4 py-6 border-r border-white/20 truncate text-center">
                 {h}
               </div>
             ))}
@@ -176,67 +169,30 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
               <div className="flex items-center justify-center h-full text-white text-[40px]">
                 Loading stocks...
               </div>
-            ) : pagedStocks.length === 0 ? (
+            ) : stocks.length === 0 ? (
               <div className="flex items-center justify-center h-full text-white/50 text-[40px]">
-                No stocks found
+                No stocks found used
               </div>
             ) : (
-              pagedStocks.map((stock, idx) => (
-                <div
-                  key={stock.id || idx}
-                  className="grid grid-cols-17 bg-[#3A3A3A] border-b border-white/10 hover:bg-white/5 text-[28px] text-white"
-                >
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.name}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.other_name || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.type_name || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.category_name || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.sub_category_name || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.sku || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.description || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.rack || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.outlet_name || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {(stock as any)["item.origin"] || stock.origin || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    LKR {stock.buy_price || "0"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    LKR {stock.retail_price || "0"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    LKR {stock.stock_price || "0"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.quantity || "0"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.unit || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.created_at?.split("T")[0] || "-"}
-                  </div>
-                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">
-                    {stock.status || "-"}
-                  </div>
+              stocks.map((stock, idx) => (
+                <div key={stock.id || idx} className="grid grid-cols-17 bg-[#3A3A3A] border-b border-white/10 hover:bg-white/5 text-[28px] text-white">
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.name}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.other_name || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.type_name || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.category_name || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.sub_category_name || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.sku || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.description || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.rack || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.outlet_name || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{(stock as any)["item.origin"] || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">LKR {stock.buy_price || "0"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">LKR {stock.retail_price || "0"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">LKR {stock.stock_price || "0"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.quantity || "0"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.unit || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.created_at?.split("T")[0] || "-"}</div>
+                  <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.status || "-"}</div>
                 </div>
               ))
             )}
@@ -245,11 +201,11 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
       </div>
 
       {/* PAGINATION */}
-      <div className="shrink-0 mb-8 scale-[1.5] text-white">
+      <div className="shrink-0 mb-8 scale-[1.5]  text-white">
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={(p) => setCurrentPage(Math.min(Math.max(1, p), totalPages))}
+          onPageChange={setCurrentPage}
         />
       </div>
     </div>
@@ -257,3 +213,4 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
 };
 
 export default ViewStock;
+
