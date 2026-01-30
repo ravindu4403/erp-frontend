@@ -7,7 +7,7 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
-import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById, cancelInvoice } from "../api/invoice";
+import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById, cancelInvoice, updateInvoice } from "../api/invoice";
 
 /* ================= TOKEN HELPERS ================= */
 const getUserFromToken = () => {
@@ -150,7 +150,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         return;
       }
 
-      const boxQty = parseInt(qty) || 0;
+      const boxQty = parseInt(snap.qty) || 0;
 
       const basePayload: any = {
         customer_id: snap.selectedCustomer.id,
@@ -182,7 +182,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       lastDraftInvoiceIdRef.current = newInvoiceId;
 
       // Persist invoice items to the backend invoice record
-      const itemPromises = snap.invoiceItems.map(async (item) => {
+      const itemPromises = invoiceItems.map(async (item: InvoiceItem) => {
         return addInvoiceItem(newInvoiceId, {
           stock_id: item.stockId || item.id,
           quantity: item.qty,
@@ -303,11 +303,11 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       }
 
       const invoicePayload: any = {
-        customer_id: snap.selectedCustomer.id,
+        customer_id: selectedCustomer.id,
         created_user_id: userId,
         status: "PENDING",
         previous_invoice_id: previousInvoiceId || null,
-        total_amount: snap.totalAmount,
+        total_amount: totalAmount,
         discount_type: discountType.toUpperCase(),
         next_box_number: boxQty
       };
@@ -338,12 +338,12 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       setInvoiceNumber(newInvoiceNo);
       setLastCreatedInvoiceNo(newInvoiceNo);
 
-      const itemPromises = snap.invoiceItems.map(async (item) => {
+      const itemPromises = invoiceItems.map(async (item: InvoiceItem) => {
         const itemPayload = {
           stock_id: item.stockId || item.id,
           quantity: item.qty,
           selling_price: item.unitPrice,
-          discount_type: snap.discountType,
+          discount_type: discountType.toUpperCase(),
           discount_amount: 0
         };
         console.log("Adding invoice item:", itemPayload);

@@ -197,15 +197,19 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
                   {parseFloat(inv.paid_amount || "0").toFixed(2)}
                 </div>
 
-                <div className="text-center truncate">{inv.status}</div>
+                <div className="text-center truncate">{normalizeStatus(inv.status)}</div>
 
                 <div className="flex justify-center">
-                  <button
-                    onClick={() => setShowRecallConfirm(true)}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full text-[20px] font-bold hover:from-blue-600 hover:to-blue-800 transition-all shadow-md"
-                  >
-                    Recall
-                  </button>
+                  {isRecallableStatus(inv.status) ? (
+                    <button
+                      onClick={() => setShowRecallConfirm(true)}
+                      className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full text-[20px] font-bold hover:from-blue-600 hover:to-blue-800 transition-all shadow-md"
+                    >
+                      Recall
+                    </button>
+                  ) : (
+                    <span className="text-white/40 text-[20px]">-</span>
+                  )}
                 </div>
               </div>
             ))}
