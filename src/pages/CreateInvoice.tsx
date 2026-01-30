@@ -7,7 +7,7 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
-import { createInvoice, addInvoiceItem, sendInvoice } from "../api/invoice";
+import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById } from "../api/invoice";
 
 /* ================= TOKEN HELPERS ================= */
 const getUserFromToken = () => {
@@ -96,6 +96,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
   };
 
+  // ✅ When starting a brand-new invoice, clear the previous 'last sent' display
+  const clearLastCreatedIfStartingNew = () => {
+    if (lastCreatedInvoiceNo && !previousInvoiceId) {
+      setLastCreatedInvoiceNo(null);
+      setInvoiceNumber("AUTO");
+      setQty("0");
+    }
+  };
+
   /* ================= AUTO GENERATE INVOICE NO ================= */
   useEffect(() => {
     if (!lastCreatedInvoiceNo && selectedCustomer && invoiceItems.length > 0 && invoiceNumber === "AUTO") {
@@ -107,7 +116,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     }
   }, [selectedCustomer, invoiceItems, invoiceNumber, lastCreatedInvoiceNo]);
 
-  const handleRecallInvoice = (invoice: any) => {
+  const handleRecallInvoice = async (invoice: any) => {
+    try {
+      if (!invoice?.invoice_items || invoice.invoice_items.length === 0) {
+        const res = await getInvoiceById(invoice.id);
+        invoice = (res.data?.data ?? res.data) || invoice;
+      }
+    } catch (e) {
+      console.warn("Could not fetch full invoice for recall", e);
+    }
     console.log("Recalled invoice for state update:", invoice);
     setPreviousInvoiceId(invoice.id);
     setInvoiceNumber(invoice.invoice_no || `INV-${invoice.id}`);
@@ -152,6 +169,12 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     try {
       // Parse qty to number, default to 0 if empty/invalid
       const boxQty = parseInt(qty) || 0;
+
+      // ✅ Bag/Box Qty must be at least 1
+      if (!Number.isFinite(boxQty) || boxQty < 1) {
+        alert("Bag/Box Qty must be at least 1");
+        return;
+      }
 
       const invoicePayload: any = {
         customer_id: selectedCustomer.id,
@@ -262,7 +285,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
   // Display invoice number - priority: lastCreated > currentDraft > AUTO
   const getDisplayNo = () => {
-    if (lastCreatedInvoiceNo) return `SENT: ${lastCreatedInvoiceNo}`;
+    if (lastCreatedInvoiceNo) return `PENDING: ${lastCreatedInvoiceNo}`;
     if (invoiceNumber && invoiceNumber !== "AUTO") return ` ${invoiceNumber}`;
     return "AUTO";
   };
@@ -314,7 +337,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
             {/* Customer Buttons - Left Side */}
             <div className="flex flex-row gap-6">
               <button
-                onClick={() => setShowAddCustomer(true)}
+                onClick={() => { clearLastCreatedIfStartingNew(); setShowAddCustomer(true); }}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#9BF5A3] via-[#72ED4A] to-[#023B06] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -328,7 +351,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
               </button>
 
               <button
-                onClick={() => setShowCreateCustomer(true)}
+                onClick={() => { clearLastCreatedIfStartingNew(); setShowCreateCustomer(true); }}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#A19BF5] via-[#4A5DED] to-[#02043B] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -403,7 +426,7 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
         {/* Add Items Button */}
         <button
-          onClick={() => setShowProducts(true)}
+          onClick={() => { clearLastCreatedIfStartingNew(); setShowProducts(true); }}
           disabled={!selectedCustomer}
           className={`w-full h-[110px] rounded-full font-bold text-[35px] mb-8 transition-all shadow-lg flex items-center justify-center gap-4 ${!selectedCustomer
             ? "bg-gray-500 cursor-not-allowed opacity-50"
@@ -488,8 +511,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
         {/* Send to cashier */}
         <button
-          onClick={() => setShowSendConfirm(true)}
-          disabled={!selectedCustomer || invoiceItems.length === 0}
+          onClick={() => {
+                const boxQty = parseInt(qty || "0");
+                if (!Number.isFinite(boxQty) || boxQty < 1) {
+                  alert("Bag/Box Qty must be at least 1");
+                  return;
+                }
+                setShowSendConfirm(true);
+              }}
+          disabled={!selectedCustomer || invoiceItems.length === 0 || parseInt(qty || "0") < 1}
           className="w-full h-[110px] bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-full font-bold text-[40px] flex items-center justify-center gap-6 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform shadow-xl mb-8"
         >
           Send Invoice to cashier

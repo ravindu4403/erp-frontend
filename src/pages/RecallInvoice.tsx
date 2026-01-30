@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getInvoices } from "../api/invoice";
+import { getInvoices, getInvoiceById } from "../api/invoice";
+import { getCustomers } from "../api/customers";
 import Pagination from "../components/Pagination";
 
 interface RecallInvoiceProps {
@@ -44,43 +45,72 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [customersById, setCustomersById] = useState<Record<number, any>>({});
+
+  const normalizeStatus = (status?: string) => {
+    const s = (status || "").toUpperCase();
+    // Backend sometimes returns SENT for invoices that are still recallable
+    if (s === "SENT") return "PENDING";
+    return s || "UNKNOWN";
+  };
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const res = await getInvoices();
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-        console.log("Invoices API Response:", res);
+      const [invRes, cusRes] = await Promise.all([
+        getInvoices(),
+        // load enough customers for mapping (adjust if your dataset is larger)
+        getCustomers(1, 2000),
+      ]);
 
-        let invoicesData: Invoice[] = [];
+      // ---- Customers ----
+      const customersArr = Array.isArray(cusRes.data?.data) ? cusRes.data.data : [];
+      const map: Record<number, any> = {};
+      customersArr.forEach((c: any) => {
+        if (c?.id) map[c.id] = c;
+      });
+      setCustomersById(map);
 
-        if (Array.isArray(res.data)) {
-          invoicesData = res.data;
-        } else if (Array.isArray(res.data?.data)) {
-          invoicesData = res.data.data;
-        } else if (res.data?.data && typeof res.data.data === 'object') {
-          invoicesData = res.data.data.invoices || [];
-        } else if (res.data && typeof res.data === 'object') {
-          const values = Object.values(res.data);
-          if (values.length > 0 && Array.isArray(values[0])) {
-            invoicesData = values[0] as Invoice[];
-          }
+      // ---- Invoices ----
+      let invoicesData: Invoice[] = [];
+
+      if (Array.isArray(invRes.data)) {
+        invoicesData = invRes.data;
+      } else if (Array.isArray(invRes.data?.data)) {
+        invoicesData = invRes.data.data;
+      } else if (invRes.data?.data && typeof invRes.data.data === "object") {
+        invoicesData = (invRes.data.data as any).invoices || [];
+      } else if (invRes.data && typeof invRes.data === "object") {
+        const values = Object.values(invRes.data);
+        if (values.length > 0 && Array.isArray(values[0])) {
+          invoicesData = values[0] as Invoice[];
         }
-
-        console.log("Parsed invoices:", invoicesData);
-        setInvoices(invoicesData);
-
-      } catch (err) {
-        console.error("Error fetching invoices:", err);
-        setInvoices([]);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchInvoices();
-  }, []);
+      // Attach customer object if backend didn't include it
+      invoicesData = invoicesData.map((inv) => ({
+        ...inv,
+        customer: inv.customer || map[inv.customer_id],
+      }));
+
+      // ✅ Only show recallable (pending) invoices
+      const pendingOnly = invoicesData.filter(
+        (inv) => normalizeStatus(inv.status) === "PENDING"
+      );
+
+      setInvoices(pendingOnly);
+    } catch (err) {
+      console.error("Error fetching invoices:", err);
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   const filteredInvoices = invoices.filter((invoice) =>
     invoice.id.toString().includes(search) ||
@@ -111,21 +141,35 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
     startIndex + ITEMS_PER_PAGE
   );
 
-  const handleRecallInvoice = () => {
-    if (!selectedInvoice) {
-      alert("Please select an invoice first");
-      return;
-    }
+  const handleRecallInvoice = async () => {
+  if (!selectedInvoice) {
+    alert("Please select an invoice first");
+    return;
+  }
 
-    console.log("Selected invoice for recall:", selectedInvoice);
+  try {
+    // ✅ fetch full invoice details (items + customer) before sending to CreateInvoice page
+    const res = await getInvoiceById(selectedInvoice.id);
+
+    const fullInvoice: any = (res.data?.data ?? res.data) || selectedInvoice;
+
+    // attach customer if missing
+    fullInvoice.customer = fullInvoice.customer || customersById[fullInvoice.customer_id] || selectedInvoice.customer;
 
     if (onSelect) {
-      onSelect(selectedInvoice);
+      onSelect(fullInvoice);
     } else {
-      alert(`Invoice ${selectedInvoice.invoice_no || `INV-${selectedInvoice.id}`} recalled successfully!`);
+      alert(
+        `Invoice ${fullInvoice.invoice_no || `INV-${fullInvoice.id}`} recalled successfully!`
+      );
     }
+
     onClose();
-  };
+  } catch (err) {
+    console.error("Error recalling invoice:", err);
+    alert("Failed to recall invoice. Please try again.");
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

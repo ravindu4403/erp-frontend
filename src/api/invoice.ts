@@ -29,7 +29,7 @@ export const addInvoiceItem = (
 
 export const sendInvoice = (invoiceId: number) =>
   api.patch(`/pos/invoice/${invoiceId}`, {
-    status: "SENT"
+    status: "PENDING"
   });
 
 export const getInvoiceById = (id: number) => {
