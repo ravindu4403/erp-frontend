@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
 
-  // Only pending/active invoices can be recalled.
-  const isRecallableInvoice = (inv: any) => {
-    const status = String(inv?.status ?? "").toUpperCase();
-    return status === "PENDING" || status === "ACTIVE";
-  };
-
 import RecallInvoiceConfirm from "./RecallInvoiceConfirm";
 import { getInvoices } from "../api/invoice";
 import Pagination from "../components/Pagination";

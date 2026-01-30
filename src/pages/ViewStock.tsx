@@ -74,12 +74,7 @@ const ViewStock = ({ goBack }: ViewStockProps) => {
             const sku = s?.item?.sku ?? s?.sku ?? "";
             const desc = s?.item?.description ?? s?.description ?? "";
 
-  const isSearching = (search || "").trim().length > 0;
-  const displayedStocks = isSearching
-    ? stocks.slice((currentPage - 1) * take, currentPage * take)
-    : stocks;
-
-return (
+            return (
               String(name).toLowerCase().includes(q) ||
               String(sku).toLowerCase().includes(q) ||
               String(desc).toLowerCase().includes(q)
@@ -109,6 +104,11 @@ return (
   }, [currentPage]);
 
   const totalPages = Math.ceil(total / take) || 1;
+
+  const isSearching = (search || "").trim().length > 0;
+  const displayedStocks = isSearching
+    ? stocks.slice((currentPage - 1) * take, currentPage * take)
+    : stocks;
 
   return (
     <div className="w-[1200px] h-[1920px] bg-black flex flex-col items-center p-10 mx-auto overflow-hidden">
@@ -174,7 +174,7 @@ return (
                 No stocks found used
               </div>
             ) : (
-              stocks.map((stock, idx) => (
+              displayedStocks.map((stock, idx) => (
                 <div key={stock.id || idx} className="grid grid-cols-17 bg-[#3A3A3A] border-b border-white/10 hover:bg-white/5 text-[28px] text-white">
                   <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.name}</div>
                   <div className="px-4 py-4 border-r border-white/10 truncate text-center">{stock.other_name || "-"}</div>

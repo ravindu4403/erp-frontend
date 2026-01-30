@@ -7,7 +7,7 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
-import { createInvoice, addInvoiceItem, sendInvoice, safeUpdateInvoiceStatus } from "../api/invoice";
+import { createInvoice, addInvoiceItem, sendInvoice } from "../api/invoice";
 
 /* ================= TOKEN HELPERS ================= */
 const getUserFromToken = () => {
@@ -318,11 +318,11 @@ const handleBack = async () => {
         status: "ACTIVE",
         previous_invoice_id: previousInvoiceId ?? null,
         paid_amount: 0,
-        total_amount: total,
+        total_amount: totalAmount,
         discount_type: discountType,
         discount_amount: discountAmount,
         next_box_number: bagQty,
-        created_user_id: loggedInUser.id,
+        created_user_id: (getUserIdFromToken() ?? 1),
       });
 
       const created = createdRes.data?.data ?? createdRes.data;
@@ -336,11 +336,11 @@ const handleBack = async () => {
           status: "PENDING",
           previous_invoice_id: previousInvoiceId ?? null,
           paid_amount: 0,
-          total_amount: total,
+          total_amount: totalAmount,
           discount_type: discountType,
           discount_amount: discountAmount,
           next_box_number: bagQty,
-          created_user_id: loggedInUser.id,
+          created_user_id: (getUserIdFromToken() ?? 1),
         });
         const created2 = createdRes2.data?.data ?? createdRes2.data;
         invoiceId = created2?.id;
@@ -357,12 +357,15 @@ const handleBack = async () => {
       // Add items (best-effort). If the backend merges line-items by stock_id, this updates quantities;
       // otherwise it appends new lines. We avoid frequent saves using the hash above.
       for (const item of invoiceItems) {
+        const stockId = (item as any)?.stock_id ?? item.stockId ?? (item as any)?.stock?.id ?? (item as any)?.stock?.stock_id;
+        if (!stockId) continue;
+
         await addInvoiceItem(invoiceId, {
-          stock_id: item.stock_id,
-          quantity: item.quantity,
-          selling_price: item.unitPrice,
-          discount_type: item.discount_type || "FIXED",
-          discount_amount: item.discount_amount || 0,
+          stock_id: Number(stockId),
+          quantity: Number((item as any)?.quantity ?? item.qty ?? 0),
+          selling_price: Number((item as any)?.unitPrice ?? (item as any)?.unit_price ?? item.unitPrice ?? 0),
+          discount_type: String((item as any)?.discount_type ?? "FIXED"),
+          discount_amount: Number((item as any)?.discount_amount ?? 0),
         });
       }
 

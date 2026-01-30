@@ -5,12 +5,13 @@ import Pagination from "../components/Pagination";
 
 interface RecallInvoiceProps {
   onClose: () => void;
-  onRecall: (invoiceId: number) => void;
+  // Return the full invoice object to the parent
+  onSelect: (invoice: any) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-const RecallInvoice = ({ onClose, onRecall }: RecallInvoiceProps) => {
+const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -174,7 +175,7 @@ const RecallInvoice = ({ onClose, onRecall }: RecallInvoiceProps) => {
                       <td className="p-2 border">{getInvoiceCustomerName(inv)}</td>
                       <td className="p-2 border">
                         <button
-                          onClick={() => onRecall(inv.id)}
+                          onClick={() => onSelect(inv)}
                           className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                         >
                           Recall

@@ -2,6 +2,8 @@ import api from "./axios";
 
 export interface Customer {
   id: number;
+  // Some backend responses may use customer_id instead of id
+  customer_id?: number;
   first_name: string;
   middle_name?: string | null;
   last_name: string;

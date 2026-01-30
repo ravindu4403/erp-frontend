@@ -27,12 +27,12 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [quantity, setQuantity] = useState<string>("1");
   const [wholesalePrice, setWholesalePrice] = useState<string>("");
+  const [sellingPrice, setSellingPrice] = useState<string>("");
 
   // Keep wholesale price equal to selling price across the UI.
   useEffect(() => {
     setWholesalePrice(sellingPrice);
   }, [sellingPrice]);
-  const [sellingPrice, setSellingPrice] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [availableStock, setAvailableStock] = useState<number>(0);
   const [selectedStockId, setSelectedStockId] = useState<number | null>(null);
