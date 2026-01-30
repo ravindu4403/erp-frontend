@@ -1,210 +1,310 @@
-import { useEffect, useMemo, useState } from "react";
-import { getInvoices } from "../api/invoice";
+import { useEffect, useState } from "react";
+import { getInvoices, getInvoiceById } from "../api/invoice";
 import { getCustomers } from "../api/customers";
 import Pagination from "../components/Pagination";
 
 interface RecallInvoiceProps {
   onClose: () => void;
-  // Return the full invoice object to the parent
-  onSelect: (invoice: any) => void;
+  onSelect?: (invoice: Invoice) => void;
 }
+
+interface Invoice {
+  id: number;
+  previous_invoice_id: number | null;
+  customer_id: number;
+  created_at: string;
+  updated_at: string;
+  created_user_id: number;
+  status: string;
+  paid_amount: number;
+  total_amount: number;
+  discount_type: string;
+  discount_amount: number;
+  next_box_number: number;
+  invoice_no?: string;
+  created_user?: {
+    username: string;
+    first_name: string;
+    last_name: string;
+  };
+  customer?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    address?: string;
+    telephone?: string;
+  };
+  invoice_items?: any[];
+}
+
+
+// Normalize and read invoice fields safely because backend responses can vary by version.
+const normalizeStatus = (status?: string) => {
+  const s = (status || "").toUpperCase();
+  // Some backends return SENT for invoices that are still recallable
+  if (s === "SENT") return "PENDING";
+  return s || "UNKNOWN";
+};
+
+const getCustomerIdFromInvoice = (inv: any): number | null => {
+  return (
+    inv?.customer_id ??
+    inv?.customerId ??
+    inv?.customer?.id ??
+    null
+  );
+};
+
+const getCustomerName = (inv: any, customersById: Record<number, any>) => {
+  const direct = inv?.customer;
+  if (direct?.first_name || direct?.last_name) {
+    return `${direct.first_name || ""} ${direct.last_name || ""}`.trim();
+  }
+
+  const cid = getCustomerIdFromInvoice(inv);
+  if (cid && customersById[cid]) {
+    const c = customersById[cid];
+    return `${c.first_name || ""} ${c.last_name || ""}`.trim() || `Customer ${cid}`;
+  }
+
+  // Keep a clear fallback (never show "Customer undefined")
+  return cid ? `Customer ${cid}` : "Customer";
+};
+
 
 const ITEMS_PER_PAGE = 10;
 
 const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Map customer_id -> customer name (used when invoice payload doesn't include customer details)
-  const [customerMap, setCustomerMap] = useState<Record<number, string>>({});
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [customersById, setCustomersById] = useState<Record<number, any>>({});
 
   useEffect(() => {
-    const fetchInvoices = async () => {
+  const fetchData = async () => {
+    try {
       setLoading(true);
-      try {
-        const res = await getInvoices();
-        const raw = res.data?.data ?? res.data ?? [];
-        setInvoices(Array.isArray(raw) ? raw : []);
-      } catch (err) {
-        console.error("Error fetching invoices", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInvoices();
-  }, []);
 
-  useEffect(() => {
-    // Best-effort: fetch customers once and build a lookup map.
-    // (If the backend has pagination, we request a large page size.)
-    const fetchCustomers = async () => {
-      try {
-        const res = await getCustomers(1, 1000, "");
-        const raw = res.data?.data ?? res.data ?? [];
-        const list = Array.isArray(raw) ? raw : raw?.data ?? [];
-        const map: Record<number, string> = {};
+      const [invRes, cusRes] = await Promise.all([
+        getInvoices(),
+        // load enough customers for mapping (adjust if your dataset is larger)
+        getCustomers(1, 2000),
+      ]);
 
-        (Array.isArray(list) ? list : []).forEach((c: any) => {
-          const id = Number(c?.id ?? c?.customer_id ?? c?.customerId);
-          const name = c?.name ?? c?.full_name ?? c?.customer_name;
-          if (Number.isFinite(id) && id > 0 && typeof name === "string" && name.trim()) {
-            map[id] = name.trim();
-          }
-        });
-
-        setCustomerMap(map);
-      } catch (err) {
-        console.warn("Could not fetch customers for recall list.", err);
-      }
-    };
-
-    fetchCustomers();
-  }, []);
-
-  const getInvoiceCustomerId = (inv: any): number | null => {
-    const id =
-      inv?.customer_id ??
-      inv?.customerId ??
-      inv?.customer?.id ??
-      inv?.customer?.customer_id ??
-      inv?.customer?.customerId;
-
-    const n = Number(id);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  };
-
-  const getInvoiceCustomerName = (inv: any): string => {
-    const direct =
-      inv?.customer_name ??
-      inv?.customer?.name ??
-      inv?.customer?.full_name ??
-      inv?.customer?.customer_name;
-
-    if (typeof direct === "string" && direct.trim()) return direct.trim();
-
-    const id = getInvoiceCustomerId(inv);
-    if (id && customerMap[id]) return customerMap[id];
-
-    // Final fallback (never show "undefined")
-    return id ? `Customer ${id}` : "Unknown customer";
-  };
-
-  const allowedStatuses = useMemo(() => new Set(["PENDING", "ACTIVE"]), []);
-
-  const filteredInvoices = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return invoices
-      .filter((inv) => {
-        const status = String(inv?.status ?? "").toUpperCase();
-        return allowedStatuses.has(status);
-      })
-      .filter((inv) => {
-        if (!q) return true;
-        const invoiceNo = String(inv?.invoice_no ?? inv?.invoiceNo ?? "").toLowerCase();
-        const customerName = getInvoiceCustomerName(inv).toLowerCase();
-        const createdBy = String(inv?.created_by?.name ?? inv?.created_by_name ?? inv?.createdBy ?? "").toLowerCase();
-        return invoiceNo.includes(q) || customerName.includes(q) || createdBy.includes(q);
+      // ---- Customers ----
+      const customersArr = Array.isArray(cusRes.data?.data) ? cusRes.data.data : [];
+      const map: Record<number, any> = {};
+      customersArr.forEach((c: any) => {
+        if (c?.id) map[c.id] = c;
       });
-  }, [invoices, searchQuery, allowedStatuses, customerMap]);
+      setCustomersById(map);
 
-  const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
+      // ---- Invoices ----
+      let invoicesData: Invoice[] = [];
 
-  const paginatedInvoices = filteredInvoices.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
+      if (Array.isArray(invRes.data)) {
+        invoicesData = invRes.data;
+      } else if (Array.isArray(invRes.data?.data)) {
+        invoicesData = invRes.data.data;
+      } else if (invRes.data?.data && typeof invRes.data.data === "object") {
+        invoicesData = (invRes.data.data as any).invoices || [];
+      } else if (invRes.data && typeof invRes.data === "object") {
+        const values = Object.values(invRes.data);
+        if (values.length > 0 && Array.isArray(values[0])) {
+          invoicesData = values[0] as Invoice[];
+        }
+      }
+
+      // Attach customer object if backend didn't include it
+      invoicesData = invoicesData.map((inv) => ({
+        ...inv,
+        customer: inv.customer || map[inv.customer_id],
+      }));
+
+      // ✅ Only show recallable (pending) invoices
+      const recallableOnly = invoicesData.filter((inv) => {
+        const st = normalizeStatus(inv.status);
+        return st === "PENDING" || st === "ACTIVE";
+      });
+
+      setInvoices(recallableOnly);
+    } catch (err) {
+      console.error("Error fetching invoices:", err);
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
+  const filteredInvoices = invoices.filter((invoice) =>
+    invoice.id.toString().includes(search) ||
+    (invoice.invoice_no && invoice.invoice_no.toLowerCase().includes(search.toLowerCase())) ||
+    invoice.created_at.toLowerCase().includes(search.toLowerCase()) ||
+    (invoice.customer &&
+      `${invoice.customer.first_name || ''} ${invoice.customer.last_name || ''}`
+        .toLowerCase()
+        .includes(search.toLowerCase())) ||
+    (invoice.created_user &&
+      `${invoice.created_user.first_name || ''} ${invoice.created_user.last_name || ''}`
+        .toLowerCase()
+        .includes(search.toLowerCase()))
   );
 
   useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE)
+  );
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedInvoices = filteredInvoices.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  const handleRecallInvoice = async () => {
+  if (!selectedInvoice) {
+    alert("Please select an invoice first");
+    return;
+  }
+
+  try {
+    // ✅ fetch full invoice details (items + customer) before sending to CreateInvoice page
+    const res = await getInvoiceById(selectedInvoice.id);
+
+    const fullInvoice: any = (res.data?.data ?? res.data) || selectedInvoice;
+
+    // attach customer if missing
+    fullInvoice.customer = fullInvoice.customer || customersById[fullInvoice.customer_id] || selectedInvoice.customer;
+
+    if (onSelect) {
+      onSelect(fullInvoice);
+    } else {
+      alert(
+        `Invoice ${fullInvoice.invoice_no || `INV-${fullInvoice.id}`} recalled successfully!`
+      );
+    }
+
+    onClose();
+  } catch (err) {
+    console.error("Error recalling invoice:", err);
+    alert("Failed to recall invoice. Please try again.");
+  }
+};
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-[900px] max-w-[95%] p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Recall Invoice</h2>
-          <button
-            onClick={onClose}
-            className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded"
-          >
-            ✖
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <div className="relative w-[1200px] max-h-[1920px] bg-[#D9D9D9] rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-full bg-white rounded-full flex items-center px-10 py-5 mb-8 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] border-2 border-white/20 flex-shrink-0">
+          <img src="/search.png" alt="Search" className="w-12 h-12 mr-6 opacity-60" />
+          <input
+            type="text"
+            placeholder="Search Invoice..."
+            className="w-full bg-transparent outline-none text-[35px] text-black placeholder:text-gray-400 font-medium"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
 
-        <input
-          type="text"
-          placeholder="Search invoice..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 border rounded mb-4"
-        />
+        {/* Table */}
+        <div className="flex-1 bg-[#BFBABA] rounded-3xl overflow-hidden flex flex-col mb-4 sm:mb-6 min-h-0">
+          <div className="grid grid-cols-5 bg-[#9FA8DA] text-[20px] sm:text-[30px] font-semibold text-black px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+            <div className="text-center">#</div>
+            <div className="text-center">Created At</div>
+            <div className="text-center">Invoice No</div>
+            <div className="text-center">Created By</div>
+            <div className="text-center">Customer</div>
+          </div>
 
-        {loading ? (
-          <p>Loading invoices...</p>
-        ) : (
-          <>
-            <div className="overflow-auto max-h-[400px]">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="p-2 border">#</th>
-                    <th className="p-2 border">Created At</th>
-                    <th className="p-2 border">Invoice No</th>
-                    <th className="p-2 border">Created By</th>
-                    <th className="p-2 border">Customer</th>
-                    <th className="p-2 border">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedInvoices.map((inv, index) => (
-                    <tr key={inv.id} className="text-center hover:bg-gray-100">
-                      <td className="p-2 border">
-                        {(page - 1) * ITEMS_PER_PAGE + index + 1}
-                      </td>
-                      <td className="p-2 border">
-                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : "-"}
-                      </td>
-                      <td className="p-2 border text-blue-600 font-medium">
-                        {inv.invoice_no ?? inv.invoiceNo ?? "-"}
-                      </td>
-                      <td className="p-2 border">
-                        {inv.created_by?.name ?? inv.created_by_name ?? inv.createdBy ?? "Unknown"}
-                      </td>
-                      <td className="p-2 border">{getInvoiceCustomerName(inv)}</td>
-                      <td className="p-2 border">
-                        <button
-                          onClick={() => onSelect(inv)}
-                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                        >
-                          Recall
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedInvoices.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-3 text-center text-gray-500">
-                        No pending/active invoices found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {loading && (
+              <div className="text-center py-12 sm:py-20 text-[28px] sm:text-[36px] text-gray-600">
+                Loading...
+              </div>
+            )}
 
-            <div className="mt-4 flex justify-between items-center">
-              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-              <button
-                onClick={onClose}
-                className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+            {!loading && paginatedInvoices.length === 0 && (
+              <div className="text-center py-12 sm:py-20 text-[28px] sm:text-[36px] text-gray-600">
+                {filteredInvoices.length === 0 ? "No invoices found" : "No results for your search"}
+              </div>
+            )}
+
+            {!loading &&
+              paginatedInvoices.map((inv, i) => (
+                <div
+                  key={inv.id}
+                  onClick={() => setSelectedInvoice(inv)}
+                  className={`grid grid-cols-5 text-[18px] sm:text-[26px] px-4 sm:px-6 py-3 sm:py-4 border-b-2 border-black/20 hover:bg-white/30 transition-colors cursor-pointer ${selectedInvoice?.id === inv.id ? "bg-green-300" : ""}`}
+                >
+                  <div className="font-medium text-center">
+                    {startIndex + i + 1}
+                  </div>
+                  <div className="text-center">
+                    {new Date(inv.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </div>
+                  <div className="font-semibold text-blue-700 text-center">
+                    {inv.invoice_no || `INV-${inv.id}`}
+                  </div>
+                  <div className="text-center truncate">
+                    {inv.created_user
+                      ? `${inv.created_user.first_name} ${inv.created_user.last_name}`
+                      : `User ${inv.created_user_id}`
+                    }
+                  </div>
+                  <div className="text-center truncate">
+                    {getCustomerName(inv, customersById)}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
+          {/* Pagination */}
+          <div className="flex justify-center text-black">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4 sm:gap-6">
+            <button
+              onClick={onClose}
+              className="px-8 sm:px-12 h-14 sm:h-16 bg-gray-300 rounded-full text-[20px] sm:text-[28px] hover:bg-gray-400 transition-colors min-w-[140px] sm:min-w-[160px]"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleRecallInvoice}
+              disabled={!selectedInvoice}
+              className="px-8 sm:px-12 h-14 sm:h-16 bg-gradient-to-b from-[#0E7A2A] to-[#064C18] text-white rounded-full text-[20px] sm:text-[28px] disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#0E8A2A] hover:to-[#065C18] transition-all min-w-[160px] sm:min-w-[220px]"
+            >
+              Recall Invoice
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

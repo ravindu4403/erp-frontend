@@ -1,5 +1,5 @@
 interface CancelInvoiceConfirmProps {
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -29,7 +29,7 @@ const CancelInvoiceConfirm = ({
         <div className="flex flex-row sm:flex-col gap-4 sm:gap-6 w-full sm:w-auto">
           {/* YES */}
           <button
-            onClick={onConfirm}
+            onClick={() => void onConfirm()}
             className="flex-1 sm:flex-none sm:w-[220px] sm:h-[90px] h-[60px] bg-gradient-to-b from-[#F59B9B] via-[#ED654A] to-[#3B0202] text-white font-bold rounded-[16px] sm:rounded-[20px] shadow hover:from-[#F5ABAB] hover:to-[#ED755A] transition-all text-[20px] sm:text-[32px] md:text-[42px] active:scale-95"
           >
             YES

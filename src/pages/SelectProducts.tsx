@@ -28,11 +28,6 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [quantity, setQuantity] = useState<string>("1");
   const [wholesalePrice, setWholesalePrice] = useState<string>("");
   const [sellingPrice, setSellingPrice] = useState<string>("");
-
-  // Keep wholesale price equal to selling price across the UI.
-  useEffect(() => {
-    setWholesalePrice(sellingPrice);
-  }, [sellingPrice]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [availableStock, setAvailableStock] = useState<number>(0);
   const [selectedStockId, setSelectedStockId] = useState<number | null>(null);
@@ -98,11 +93,11 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
 
       setAvailableStock(Number(stock.quantity || 0));
       setSelectedStockId(stock.id);
-      const wholesale = stock.buy_price || 0;
       const selling = stock.stock_price || stock.retail_price || 0;
 
-      setWholesalePrice(wholesale.toString());
+      // System rule: wholesale selling price == selling price
       setSellingPrice(selling.toString());
+      setWholesalePrice(selling.toString());
 
     } catch (err) {
       console.error("Failed to load stock data", err);
@@ -346,6 +341,8 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
               className="w-24 sm:w-28 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px] ml-3"
               value={wholesalePrice}
               readOnly
+              disabled
+              // Wholesale is synced with selling price
               step="0.01"
             />
           </div>
@@ -366,7 +363,12 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
               placeholder="Price"
               className="w-24 sm:w-28 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px] ml-[-6px]"
               value={sellingPrice}
-              onChange={(e) => setSellingPrice(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSellingPrice(v);
+                // Keep wholesale in sync with selling
+                setWholesalePrice(v);
+              }}
               step="0.01"
               required
             />

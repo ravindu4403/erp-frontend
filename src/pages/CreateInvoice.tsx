@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import RecallInvoice from "./RecallInvoice";
 import CancelInvoiceConfirm from "./CancelInvoiceConfirm";
 import AddCustomer from "./AddCustomer";
@@ -7,7 +7,7 @@ import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
-import { createInvoice, addInvoiceItem, sendInvoice } from "../api/invoice";
+import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById, cancelInvoice } from "../api/invoice";
 
 /* ================= TOKEN HELPERS ================= */
 const getUserFromToken = () => {
@@ -68,11 +68,6 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [previousInvoiceId, setPreviousInvoiceId] = useState<number | null>(null);
   const [lastCreatedInvoiceNo, setLastCreatedInvoiceNo] = useState<string | null>(null);
 
-  // Draft invoice saved when the user leaves without sending.
-  const [draftInvoiceId, setDraftInvoiceId] = useState<number | null>(null);
-  const [draftInvoiceNo, setDraftInvoiceNo] = useState<string | null>(null);
-  const [lastSavedDraftHash, setLastSavedDraftHash] = useState<string>("");
-
   /* ================= TOTALS ================= */
   const subtotal = invoiceItems.reduce(
     (acc, item) => acc + (item.unitPrice * item.qty),
@@ -84,6 +79,132 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       : discountAmount;
   const totalAmount = subtotal - discountValue;
   const itemCount = invoiceItems.length;
+
+
+  // Track whether the current screen has finalized the invoice (sent or cancelled).
+  // This prevents auto-saving when the invoice is already completed.
+  const hasFinalizedRef = useRef(false);
+
+  // Keep the last saved draft invoice id so we can cancel it if needed.
+  const lastDraftInvoiceIdRef = useRef<number | null>(null);
+
+  // Keep the latest invoice draft state for unmount auto-save.
+  const draftSnapshotRef = useRef({
+    selectedCustomer: null as Customer | null,
+    invoiceItems: [] as InvoiceItem[],
+    qty: "0",
+    discountType: "fixed" as "fixed" | "percentage",
+    discountAmount: 0,
+    paidAmount: 0,
+    previousInvoiceId: null as number | null,
+    totalAmount: 0,
+  });
+
+  // Update snapshot every render when values change.
+  useEffect(() => {
+    draftSnapshotRef.current = {
+      selectedCustomer,
+      invoiceItems,
+      qty,
+      discountType,
+      discountAmount,
+      paidAmount,
+      previousInvoiceId,
+      totalAmount,
+    };
+  }, [selectedCustomer, invoiceItems, qty, discountType, discountAmount, paidAmount, previousInvoiceId, totalAmount]);
+
+  // Save the current in-progress invoice to the backend as an ACTIVE invoice.
+  // This runs when the user leaves the screen without sending it to the cashier.
+  const persistActiveInvoice = async (reason: "back" | "unmount") => {
+    const snap = reason === "unmount" ? draftSnapshotRef.current : {
+      selectedCustomer,
+      invoiceItems,
+      qty,
+      discountType,
+      discountAmount,
+      paidAmount,
+      previousInvoiceId,
+      totalAmount,
+    };
+    try {
+      if (hasFinalizedRef.current) return;
+      if (snap.invoiceItems.length === 0) return;
+
+      const userId = getUserIdFromToken();
+      if (!userId) return;
+
+      // If customer is not selected, store draft locally to avoid losing items.
+      if (!snap.selectedCustomer?.id) {
+        const localDraft = {
+          reason,
+          saved_at: new Date().toISOString(),
+          customer: null,
+          items: snap.invoiceItems,
+          qty: snap.qty,
+          discountType: snap.discountType,
+          discountAmount: snap.discountAmount,
+          paidAmount: snap.paidAmount,
+        };
+        localStorage.setItem("pos_local_draft_invoice", JSON.stringify(localDraft));
+        return;
+      }
+
+      const boxQty = parseInt(qty) || 0;
+
+      const basePayload: any = {
+        customer_id: snap.selectedCustomer.id,
+        created_user_id: userId,
+        status: "ACTIVE",
+        paid_amount: snap.paidAmount,
+        total_amount: snap.totalAmount,
+        discount_type: snap.discountType,
+        discount_amount: snap.discountAmount,
+        next_box_number: boxQty,
+      };
+
+      // If we recalled an invoice, keep the reference for audit/history.
+      if (snap.previousInvoiceId) basePayload.previous_invoice_id = snap.previousInvoiceId;
+
+      let invoiceResponse;
+      try {
+        invoiceResponse = await createInvoice(basePayload);
+      } catch (e: any) {
+        // Fallback: if backend doesn't support ACTIVE, use SENT as a safe draft status
+        invoiceResponse = await createInvoice({ ...basePayload, status: "SENT" });
+      }
+
+      const responseData = invoiceResponse.data?.data || invoiceResponse.data;
+      const newInvoiceId = responseData?.id;
+
+      if (!newInvoiceId) return;
+
+      lastDraftInvoiceIdRef.current = newInvoiceId;
+
+      // Persist invoice items to the backend invoice record
+      const itemPromises = snap.invoiceItems.map(async (item) => {
+        return addInvoiceItem(newInvoiceId, {
+          stock_id: item.stockId || item.id,
+          quantity: item.qty,
+          selling_price: item.unitPrice,
+          discount_type: snap.discountType,
+          discount_amount: 0,
+        });
+      });
+
+      await Promise.all(itemPromises);
+
+      // Mark as finalized for this screen so we don't save again
+      hasFinalizedRef.current = true;
+
+      // Clear local draft if any
+      localStorage.removeItem("pos_local_draft_invoice");
+    } catch (e) {
+      // Do not block navigation if draft save fails
+      console.warn("Failed to persist active invoice draft:", e);
+    }
+  };
+
 
   /* ================= HANDLERS ================= */
   const handleAddProduct = (product: InvoiceItem) => {
@@ -101,6 +222,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
   };
 
+  // ✅ When starting a brand-new invoice, clear the previous 'last sent' display
+  const clearLastCreatedIfStartingNew = () => {
+    if (lastCreatedInvoiceNo && !previousInvoiceId) {
+      setLastCreatedInvoiceNo(null);
+      setInvoiceNumber("AUTO");
+      setQty("0");
+    }
+  };
+
   /* ================= AUTO GENERATE INVOICE NO ================= */
   useEffect(() => {
     if (!lastCreatedInvoiceNo && selectedCustomer && invoiceItems.length > 0 && invoiceNumber === "AUTO") {
@@ -112,7 +242,15 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     }
   }, [selectedCustomer, invoiceItems, invoiceNumber, lastCreatedInvoiceNo]);
 
-  const handleRecallInvoice = (invoice: any) => {
+  const handleRecallInvoice = async (invoice: any) => {
+    try {
+      if (!invoice?.invoice_items || invoice.invoice_items.length === 0) {
+        const res = await getInvoiceById(invoice.id);
+        invoice = (res.data?.data ?? res.data) || invoice;
+      }
+    } catch (e) {
+      console.warn("Could not fetch full invoice for recall", e);
+    }
     console.log("Recalled invoice for state update:", invoice);
     setPreviousInvoiceId(invoice.id);
     setInvoiceNumber(invoice.invoice_no || `INV-${invoice.id}`);
@@ -158,12 +296,18 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       // Parse qty to number, default to 0 if empty/invalid
       const boxQty = parseInt(qty) || 0;
 
+      // ✅ Bag/Box Qty must be at least 1
+      if (!Number.isFinite(boxQty) || boxQty < 1) {
+        alert("Bag/Box Qty must be at least 1");
+        return;
+      }
+
       const invoicePayload: any = {
-        customer_id: selectedCustomer.id,
+        customer_id: snap.selectedCustomer.id,
         created_user_id: userId,
         status: "PENDING",
         previous_invoice_id: previousInvoiceId || null,
-        total_amount: totalAmount,
+        total_amount: snap.totalAmount,
         discount_type: discountType.toUpperCase(),
         next_box_number: boxQty
       };
@@ -194,12 +338,12 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       setInvoiceNumber(newInvoiceNo);
       setLastCreatedInvoiceNo(newInvoiceNo);
 
-      const itemPromises = invoiceItems.map(async (item) => {
+      const itemPromises = snap.invoiceItems.map(async (item) => {
         const itemPayload = {
           stock_id: item.stockId || item.id,
           quantity: item.qty,
           selling_price: item.unitPrice,
-          discount_type: discountType,
+          discount_type: snap.discountType,
           discount_amount: 0
         };
         console.log("Adding invoice item:", itemPayload);
@@ -211,6 +355,10 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
       await sendInvoice(newInvoiceId);
 
       alert(`Invoice #${newInvoiceNo} sent to cashier successfully!`);
+
+      // Mark as finalized so auto-save does not run
+      hasFinalizedRef.current = true;
+      localStorage.removeItem("pos_local_draft_invoice");
 
       // Reset form but keep the invoice number displayed
       setInvoiceItems([]);
@@ -231,18 +379,45 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
     }
   };
 
-  const handleCancelInvoice = () => {
-    // Reset everything including invoice number
-    setInvoiceItems([]);
-    setSelectedCustomer(null);
-    setQty("0");
-    setDiscountAmount(0);
-    setPaidAmount(0);
-    setPreviousInvoiceId(null);
-    setInvoiceNumber("AUTO");
-    setLastCreatedInvoiceNo(null);
-    setShowCancelConfirm(false);
-    alert("Invoice cancelled successfully!");
+  const handleCancelInvoice = async () => {
+    try {
+      // If we already created/saved a draft (or recalled one), cancel it in backend
+      const toCancelId = lastDraftInvoiceIdRef.current || previousInvoiceId || null;
+
+      if (toCancelId) {
+        try {
+          await cancelInvoice(toCancelId);
+        } catch (e: any) {
+          // Fallback: backend may use "CANCELED"
+          try {
+            await updateInvoice(toCancelId, { status: "CANCELED" });
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      // Mark as finalized so auto-save does not create an ACTIVE invoice after cancel
+      hasFinalizedRef.current = true;
+      localStorage.removeItem("pos_local_draft_invoice");
+
+      // Reset everything including invoice number
+      setInvoiceItems([]);
+      setSelectedCustomer(null);
+      setQty("0");
+      setDiscountAmount(0);
+      setPaidAmount(0);
+      setPreviousInvoiceId(null);
+      setInvoiceNumber("AUTO");
+      setLastCreatedInvoiceNo(null);
+      setShowCancelConfirm(false);
+
+      alert("Invoice cancelled successfully!");
+    } catch (e) {
+      console.warn("Cancel invoice failed:", e);
+      setShowCancelConfirm(false);
+      alert("Failed to cancel invoice. Please try again.");
+    }
   };
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,118 +442,22 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
   // Display invoice number - priority: lastCreated > currentDraft > AUTO
   const getDisplayNo = () => {
-    // Show the current invoice number if we recalled an invoice.
-    if (invoiceNumber && invoiceNumber !== "AUTO") return invoiceNumber;
-
-    // If we auto-saved a draft, show its invoice number.
-    if (draftInvoiceNo) return draftInvoiceNo;
-
-    // Default for a brand-new invoice.
+    if (lastCreatedInvoiceNo) return `PENDING: ${lastCreatedInvoiceNo}`;
+    if (invoiceNumber && invoiceNumber !== "AUTO") return ` ${invoiceNumber}`;
     return "AUTO";
   };
-
-
-// Create a stable hash of the current draft. Used to avoid re-saving the same data repeatedly.
-const buildDraftHash = () => {
-  const customerId = selectedCustomer?.id ?? selectedCustomer?.customer_id;
-  const items = invoiceItems.map((it: any) => ({
-    stockId: it?.stock_id ?? it?.stockId ?? it?.stock?.id ?? it?.stock?.stock_id,
-    qty: Number(it?.quantity ?? it?.qty ?? 0),
-    price: Number(it?.unitPrice ?? it?.unit_price ?? 0),
-  }));
-  return JSON.stringify({ customerId, items, qty: Number(qty || 0) });
-};
-
-// Save the invoice as ACTIVE if the user leaves without sending.
-const handleBack = async () => {
-  try {
-    // If there is nothing to save, just go back.
-    if (!selectedCustomer || invoiceItems.length === 0) {
-      goBack();
-      return;
-    }
-
-    const bagQty = Number(qty || 0);
-    const draftHash = buildDraftHash();
-
-    // Avoid duplicate saves when the draft data hasn't changed.
-    if (draftHash === lastSavedDraftHash && draftInvoiceId) {
-      goBack();
-      return;
-    }
-
-    // Create the invoice once, then add items.
-    // Prefer ACTIVE so it can be managed separately from sent-to-cashier invoices.
-    let invoiceId = draftInvoiceId;
-    let invoiceNo = draftInvoiceNo;
-
-    if (!invoiceId) {
-      const createdRes = await createInvoice({
-        customer_id: selectedCustomer.id,
-        status: "ACTIVE",
-        previous_invoice_id: previousInvoiceId ?? null,
-        paid_amount: 0,
-        total_amount: totalAmount,
-        discount_type: discountType,
-        discount_amount: discountAmount,
-        next_box_number: bagQty,
-        created_user_id: (getUserIdFromToken() ?? 1),
-      });
-
-      const created = createdRes.data?.data ?? createdRes.data;
-      invoiceId = created?.id;
-      invoiceNo = created?.invoice_no ?? created?.invoiceNo ?? null;
-
-      // Fallback: if ACTIVE is not supported by the backend, try PENDING.
-      if (!invoiceId) {
-        const createdRes2 = await createInvoice({
-          customer_id: selectedCustomer.id,
-          status: "PENDING",
-          previous_invoice_id: previousInvoiceId ?? null,
-          paid_amount: 0,
-          total_amount: totalAmount,
-          discount_type: discountType,
-          discount_amount: discountAmount,
-          next_box_number: bagQty,
-          created_user_id: (getUserIdFromToken() ?? 1),
-        });
-        const created2 = createdRes2.data?.data ?? createdRes2.data;
-        invoiceId = created2?.id;
-        invoiceNo = created2?.invoice_no ?? created2?.invoiceNo ?? null;
-      }
-
-      if (invoiceId) {
-        setDraftInvoiceId(invoiceId);
-        setDraftInvoiceNo(invoiceNo);
-      }
-    }
-
-    if (invoiceId) {
-      // Add items (best-effort). If the backend merges line-items by stock_id, this updates quantities;
-      // otherwise it appends new lines. We avoid frequent saves using the hash above.
-      for (const item of invoiceItems) {
-        const stockId = (item as any)?.stock_id ?? item.stockId ?? (item as any)?.stock?.id ?? (item as any)?.stock?.stock_id;
-        if (!stockId) continue;
-
-        await addInvoiceItem(invoiceId, {
-          stock_id: Number(stockId),
-          quantity: Number((item as any)?.quantity ?? item.qty ?? 0),
-          selling_price: Number((item as any)?.unitPrice ?? (item as any)?.unit_price ?? item.unitPrice ?? 0),
-          discount_type: String((item as any)?.discount_type ?? "FIXED"),
-          discount_amount: Number((item as any)?.discount_amount ?? 0),
-        });
-      }
-
-      setLastSavedDraftHash(draftHash);
-    }
-  } catch (err) {
-    console.error("Auto-save draft invoice failed", err);
-    // Even if saving fails, allow navigation to avoid trapping the user.
-  } finally {
-    goBack();
-  }
-};
   const displayInvoiceNumber = getDisplayNo();
+
+
+  // Auto-save invoice as ACTIVE when user leaves this screen without sending it.
+  useEffect(() => {
+    return () => {
+      // Best-effort save on unmount
+      persistActiveInvoice("unmount");
+    };
+    // We intentionally do NOT add persistActiveInvoice to deps to avoid re-registering cleanup often.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="w-[1200px] h-[1920px] bg-black flex flex-col items-center p-10 mx-auto overflow-hidden">
@@ -386,7 +465,10 @@ const handleBack = async () => {
       {/* Top Bar */}
       <div className="w-full bg-[#D9D9D9] rounded-full flex items-center justify-between px-6 py-8 mb-4">
         <button
-          onClick={handleBack}
+          onClick={async () => {
+              await persistActiveInvoice("back");
+              goBack();
+            }}
           className="flex items-center gap-2 text-[29px] text-black"
         >
           <img src="/Polygon.png" alt="Back" className="w-12 h-12" />
@@ -426,7 +508,7 @@ const handleBack = async () => {
             {/* Customer Buttons - Left Side */}
             <div className="flex flex-row gap-6">
               <button
-                onClick={() => setShowAddCustomer(true)}
+                onClick={() => { clearLastCreatedIfStartingNew(); setShowAddCustomer(true); }}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#9BF5A3] via-[#72ED4A] to-[#023B06] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -440,7 +522,7 @@ const handleBack = async () => {
               </button>
 
               <button
-                onClick={() => setShowCreateCustomer(true)}
+                onClick={() => { clearLastCreatedIfStartingNew(); setShowCreateCustomer(true); }}
                 className="w-[180px] h-[300px] bg-gradient-to-b from-[#A19BF5] via-[#4A5DED] to-[#02043B] text-white rounded-[40px] font-medium flex flex-col items-center justify-center gap-4 hover:brightness-110 transition-all"
               >
                 <img
@@ -515,7 +597,7 @@ const handleBack = async () => {
 
         {/* Add Items Button */}
         <button
-          onClick={() => setShowProducts(true)}
+          onClick={() => { clearLastCreatedIfStartingNew(); setShowProducts(true); }}
           disabled={!selectedCustomer}
           className={`w-full h-[110px] rounded-full font-bold text-[35px] mb-8 transition-all shadow-lg flex items-center justify-center gap-4 ${!selectedCustomer
             ? "bg-gray-500 cursor-not-allowed opacity-50"
@@ -600,8 +682,15 @@ const handleBack = async () => {
 
         {/* Send to cashier */}
         <button
-          onClick={() => setShowSendConfirm(true)}
-          disabled={!selectedCustomer || invoiceItems.length === 0}
+          onClick={() => {
+                const boxQty = parseInt(qty || "0");
+                if (!Number.isFinite(boxQty) || boxQty < 1) {
+                  alert("Bag/Box Qty must be at least 1");
+                  return;
+                }
+                setShowSendConfirm(true);
+              }}
+          disabled={!selectedCustomer || invoiceItems.length === 0 || parseInt(qty || "0") < 1}
           className="w-full h-[110px] bg-gradient-to-b from-[#7CFE96] via-[#4AED7B] to-[#053E13] text-white rounded-full font-bold text-[40px] flex items-center justify-center gap-6 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform shadow-xl mb-8"
         >
           Send Invoice to cashier

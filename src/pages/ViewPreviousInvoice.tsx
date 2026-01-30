@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import RecallInvoiceConfirm from "./RecallInvoiceConfirm";
 import { getInvoices } from "../api/invoice";
 import Pagination from "../components/Pagination";
@@ -22,6 +21,20 @@ interface Invoice {
   };
 }
 
+
+// Normalize status values so the UI logic stays consistent across backend versions.
+const normalizeStatus = (status?: string) => {
+  const s = (status || "").toUpperCase();
+  if (s === "SENT") return "PENDING";
+  return s || "UNKNOWN";
+};
+
+const isRecallableStatus = (status?: string) => {
+  const st = normalizeStatus(status);
+  return st === "PENDING" || st === "ACTIVE";
+};
+
+
 const ITEMS_PER_PAGE = 20;
 
 const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
@@ -37,7 +50,14 @@ const ViewPreviousInvoice = ({ goBack }: ViewPreviousInvoiceProps) => {
       try {
         setLoading(true);
         const res = await getInvoices();
-        setInvoices(res.data.data || []);
+        // Backend responses can differ, so parse defensively.
+        const data = res.data;
+        const list =
+          Array.isArray(data) ? data :
+          Array.isArray(data?.data) ? data.data :
+          Array.isArray(data?.data?.data) ? data.data.data :
+          [];
+        setInvoices(list);
       } catch (err) {
         console.error("Failed to load invoices", err);
       } finally {

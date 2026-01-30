@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
 
   preview: {
-    // Railway domain එක exact එක add කරන්න
+    // Add your Railway domain here to allow Vite preview host checks.
     allowedHosts: ["erp-frontend-production-4f4c.up.railway.app"],
   },
 });

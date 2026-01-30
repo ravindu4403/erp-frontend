@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const rawApiUrl = (import.meta.env.VITE_API_URL || "").trim();
-const normalizedApiUrl = rawApiUrl.replace(/\/+$/, ""); // trailing / අයින් කරනවා
+const normalizedApiUrl = rawApiUrl.replace(/\/+$/, ""); // Remove trailing slashes from the configured API URL.
 
 const resolvedBaseURL = normalizedApiUrl
   ? normalizedApiUrl.endsWith("/api")
@@ -18,7 +18,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
