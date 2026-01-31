@@ -47,29 +47,62 @@ const normalizeStatus = (status?: string) => {
 };
 
 const getCustomerIdFromInvoice = (inv: any): number | null => {
-  return (
+  const raw =
     inv?.customer_id ??
     inv?.customerId ??
+    inv?.customerID ??
     inv?.customer?.id ??
-    null
-  );
+    (typeof inv?.customer === "number" ? inv.customer : null);
+
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-const getCustomerName = (inv: any, customersById: Record<number, any>) => {
-  const direct = inv?.customer;
-  if (direct?.first_name || direct?.last_name) {
-    return `${direct.first_name || ""} ${direct.last_name || ""}`.trim();
-  }
 
+const getCustomerName = (inv: any, customersById: Record<number, any>) => {
+  // 1) If invoice already contains customer name (varies by backend)
+  const direct = inv?.customer;
+
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  if (typeof inv?.customer_name === "string" && inv.customer_name.trim()) return inv.customer_name.trim();
+  if (typeof inv?.customerName === "string" && inv.customerName.trim()) return inv.customerName.trim();
+
+  const directName = direct?.name || direct?.full_name;
+  if (typeof directName === "string" && directName.trim()) return directName.trim();
+
+  const first =
+    direct?.first_name ??
+    direct?.firstName ??
+    inv?.customer_first_name ??
+    inv?.customerFirstName ??
+    "";
+  const last =
+    direct?.last_name ??
+    direct?.lastName ??
+    inv?.customer_last_name ??
+    inv?.customerLastName ??
+    "";
+
+  const directFull = `${first || ""} ${last || ""}`.trim();
+  if (directFull) return directFull;
+
+  // 2) Lookup from customers map
   const cid = getCustomerIdFromInvoice(inv);
   if (cid && customersById[cid]) {
     const c = customersById[cid];
-    return `${c.first_name || ""} ${c.last_name || ""}`.trim() || `Customer ${cid}`;
+    const fullFromMap = (c?.name || c?.full_name || "").toString().trim();
+    if (fullFromMap) return fullFromMap;
+
+    const fn = (c?.first_name ?? c?.firstName ?? "").toString();
+    const ln = (c?.last_name ?? c?.lastName ?? "").toString();
+    const full = `${fn} ${ln}`.trim();
+    return full || `Customer ${cid}`;
   }
 
-  // Keep a clear fallback (never show "Customer undefined")
+  // 3) Fallback
   return cid ? `Customer ${cid}` : "Customer";
 };
+
 
 
 const ITEMS_PER_PAGE = 10;
@@ -87,19 +120,51 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
     try {
       setLoading(true);
 
-      const [invRes, cusRes] = await Promise.all([
-        getInvoices(),
-        // load enough customers for mapping (adjust if your dataset is larger)
-        getCustomers(1, 2000),
-      ]);
+const fetchAllCustomers = async () => {
+  const LIMIT = 200;
+  const all: any[] = [];
 
-      // ---- Customers ----
-      const customersArr = Array.isArray(cusRes.data?.data) ? cusRes.data.data : [];
-      const map: Record<number, any> = {};
-      customersArr.forEach((c: any) => {
-        if (c?.id) map[c.id] = c;
-      });
-      setCustomersById(map);
+  for (let page = 1; page <= 50; page++) {
+    const res = await getCustomers(page, LIMIT, "");
+    const d = res.data;
+
+    let arr: any[] = [];
+    if (Array.isArray(d)) arr = d;
+    else if (Array.isArray(d?.data)) arr = d.data;
+    else if (Array.isArray(d?.customers)) arr = d.customers;
+    else if (Array.isArray(d?.data?.customers)) arr = d.data.customers;
+    else if (Array.isArray(d?.data?.data)) arr = d.data.data;
+
+    if (!arr || arr.length === 0) break;
+
+    all.push(...arr);
+    if (arr.length < LIMIT) break;
+  }
+
+  return all;
+};
+
+const [invRes, customersArr] = await Promise.all([
+  getInvoices(),
+  fetchAllCustomers(),
+]);
+
+// ---- Customers ----
+const map: Record<number, any> = {};
+customersArr.forEach((c: any) => {
+  const id = Number(c?.id ?? c?.customer_id ?? c?.customerId);
+  if (!Number.isFinite(id) || id <= 0) return;
+
+  map[id] = {
+    ...c,
+    id,
+    first_name: c?.first_name ?? c?.firstName ?? c?.name ?? "",
+    last_name: c?.last_name ?? c?.lastName ?? "",
+    full_name: c?.full_name ?? c?.fullName ?? c?.name ?? "",
+  };
+});
+setCustomersById(map);
+
 
       // ---- Invoices ----
       let invoicesData: Invoice[] = [];
@@ -120,7 +185,7 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
       // Attach customer object if backend didn't include it
       invoicesData = invoicesData.map((inv) => ({
         ...inv,
-        customer: inv.customer || map[inv.customer_id],
+        customer: inv.customer || (getCustomerIdFromInvoice(inv) ? map[getCustomerIdFromInvoice(inv) as number] : undefined),
       }));
 
       // ✅ Only show recallable (pending) invoices
@@ -145,10 +210,7 @@ const RecallInvoice = ({ onClose, onSelect }: RecallInvoiceProps) => {
     invoice.id.toString().includes(search) ||
     (invoice.invoice_no && invoice.invoice_no.toLowerCase().includes(search.toLowerCase())) ||
     invoice.created_at.toLowerCase().includes(search.toLowerCase()) ||
-    (invoice.customer &&
-      `${invoice.customer.first_name || ''} ${invoice.customer.last_name || ''}`
-        .toLowerCase()
-        .includes(search.toLowerCase())) ||
+    (getCustomerName(invoice, customersById).toLowerCase().includes(search.toLowerCase())) ||
     (invoice.created_user &&
       `${invoice.created_user.first_name || ''} ${invoice.created_user.last_name || ''}`
         .toLowerCase()

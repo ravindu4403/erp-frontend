@@ -32,7 +32,47 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
   const [availableStock, setAvailableStock] = useState<number>(0);
   const [selectedStockId, setSelectedStockId] = useState<number | null>(null);
 
+  // Cache stocks for the currently selected outlet so we can display correct outlet name
+  const [stocksByItemId, setStocksByItemId] = useState<Record<number, any>>({});
+  const [currentOutletName, setCurrentOutletName] = useState<string>("-");
+
+
   useEffect(() => {
+  const loadOutletStocks = async () => {
+    try {
+      const outletId = Number(localStorage.getItem("outlet_id")) || 1;
+      const res = await getStocksByOutlet(outletId);
+
+      const stocksData = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data && Array.isArray(res.data.data))
+        ? res.data.data
+        : [];
+
+      const map: Record<number, any> = {};
+      let outletName = "";
+
+      stocksData.forEach((s: any) => {
+        const itemId = Number(s?.item_id ?? s?.itemId);
+        if (Number.isFinite(itemId)) map[itemId] = s;
+        if (!outletName) {
+          outletName = s?.outlet_name || s?.outlet?.name || "";
+        }
+      });
+
+      setStocksByItemId(map);
+      if (outletName) setCurrentOutletName(outletName);
+    } catch (err) {
+      console.error("Failed to load outlet stocks:", err);
+      setStocksByItemId({});
+    }
+  };
+
+  loadOutletStocks();
+}, []);
+
+
+useEffect(() => {
     const fetchItems = async () => {
       try {
         setLoading(true);
@@ -67,45 +107,34 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
     return items.slice(startIndex, endIndex);
   }, [items, currentPage]);
 
-  const handleItemSelect = async (item: Item) => {
-    setSelectedItem(item);
+  const handleItemSelect = (item: Item) => {
+  setSelectedItem(item);
 
-    try {
-      const outletId = Number(localStorage.getItem("outlet_id")) || 1;
-      const res = await getStocksByOutlet(outletId);
+  const stock = stocksByItemId[item.id];
 
-      const stocksData = Array.isArray(res.data) ? res.data :
-        (res.data.data && Array.isArray(res.data.data)) ? res.data.data :
-          [];
+  if (!stock) {
+    alert("No stock found for this item in current outlet");
+    setWholesalePrice("");
+    setSellingPrice("");
+    setAvailableStock(0);
+    setSelectedStockId(null);
+    return;
+  }
 
-      const stock = stocksData.find(
-        (s: any) => s.item_id === item.id
-      );
+  setAvailableStock(Number(stock.quantity || 0));
+  setSelectedStockId(stock.id);
 
-      if (!stock) {
-        alert("No stock found for this item in current outlet");
-        setWholesalePrice("");
-        setSellingPrice("");
-        setAvailableStock(0);
-        setSelectedStockId(null);
-        return;
-      }
+  const selling =
+    stock.stock_price ??
+    stock.retail_price ??
+    stock.selling_price ??
+    0;
 
-      setAvailableStock(Number(stock.quantity || 0));
-      setSelectedStockId(stock.id);
-      const selling = stock.stock_price || stock.retail_price || 0;
+  // System rule: wholesale selling price == selling price
+  setSellingPrice(String(selling));
+  setWholesalePrice(String(selling));
+};
 
-      // System rule: wholesale selling price == selling price
-      setSellingPrice(selling.toString());
-      setWholesalePrice(selling.toString());
-
-    } catch (err) {
-      console.error("Failed to load stock data", err);
-      setWholesalePrice("");
-      setSellingPrice("");
-      setAvailableStock(0);
-    }
-  };
 
   const handleAddToInvoice = () => {
     if (!selectedItem || !selectedStockId) {
@@ -217,7 +246,7 @@ const SelectProducts = ({ onClose, onAdd }: SelectProductsProps) => {
                     <div className="text-center font-medium truncate">{item.sku}</div>
                     <div className="text-center truncate">{item.description}</div>
                     <div className="text-center truncate">{item.name}</div>
-                    <div className="text-center truncate">{item.origin}</div>
+                    <div className="text-center truncate">{stocksByItemId[item.id]?.outlet_name || stocksByItemId[item.id]?.outlet?.name || currentOutletName || "-"}</div>
                   </div>
                 );
               })}
