@@ -339,69 +339,59 @@ useEffect(() => {
         </div>
 
         {/* FORM */}
-        <div className="flex flex-col gap-2 sm:gap-3 mb-4 sm:mb-6 flex-shrink-0  ">
+        <div className="grid grid-cols-[180px_1fr] sm:grid-cols-[210px_1fr] gap-y-3 sm:gap-y-4 gap-x-4 sm:gap-x-6 mb-4 sm:mb-6 flex-shrink-0">
           {/* Selected Product */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Selected:</span>
-            <span className="text-blue-700 font-bold text-[18px] sm:text-[22px] md:text-[26px]">
-              {selectedItem ? selectedItem.sku : "None"}
-            </span>
-          </div>
+          <span className="font-semibold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">Selected:</span>
+          <span className="text-blue-700 font-bold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">
+            {selectedItem ? selectedItem.sku : "None"}
+          </span>
 
           {/* Quantity */}
-          <div className="flex items-center gap-4 sm:gap-5 ">
-            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Qty:</span>
-            <input
-              type="number"
-              placeholder="Qty"
-              className="w-28 sm:w-32 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              min="1"
-            />
-          </div>
+          <span className="font-semibold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">Qty:</span>
+          <input
+            type="number"
+            placeholder="Qty"
+            className="w-full max-w-[220px] bg-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[18px] sm:text-[22px] md:text-[24px]"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            min="1"
+          />
 
           {/* Wholesale Price */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Wholesale:</span>
-            <input
-              type="number"
-              placeholder="Price"
-              className="w-32 sm:w-36 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
-              value={wholesalePrice}
-              readOnly
-              disabled
-              // Wholesale is synced with selling price
-              step="0.01"
-            />
-          </div>
+          <span className="font-semibold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">Wholesale:</span>
+          <input
+            type="number"
+            placeholder="Price"
+            className="w-full max-w-[220px] bg-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[18px] sm:text-[22px] md:text-[24px]"
+            value={wholesalePrice}
+            readOnly
+            disabled
+            // Wholesale is synced with selling price
+            step="0.01"
+          />
 
           {/* Available Stock */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Available Stock:</span>
-            <span className={`font-bold text-[18px] sm:text-[22px] md:text-[26px] ${availableStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {availableStock}
-            </span>
-          </div>
+          <span className="font-semibold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">Available Stock:</span>
+          <span className={`font-bold text-[20px] sm:text-[26px] md:text-[30px] leading-tight ${availableStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+            {availableStock}
+          </span>
 
           {/* Selling Price */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Selling Price:</span>
-            <input
-              type="number"
-              placeholder="Price"
-              className="w-32 sm:w-36 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
-              value={sellingPrice}
-              onChange={(e) => {
-                const v = e.target.value;
-                setSellingPrice(v);
-                // Keep wholesale in sync with selling
-                setWholesalePrice(v);
-              }}
-              step="0.01"
-              required
-            />
-          </div>
+          <span className="font-semibold text-[20px] sm:text-[26px] md:text-[30px] leading-tight">Selling Price:</span>
+          <input
+            type="number"
+            placeholder="Price"
+            className="w-full max-w-[220px] bg-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[18px] sm:text-[22px] md:text-[24px]"
+            value={sellingPrice}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSellingPrice(v);
+              // Keep wholesale in sync with selling
+              setWholesalePrice(v);
+            }}
+            step="0.01"
+            required
+          />
         </div>
 
         {/* FOOTER */}
