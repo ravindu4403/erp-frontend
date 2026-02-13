@@ -341,20 +341,20 @@ useEffect(() => {
         {/* FORM */}
         <div className="flex flex-col gap-2 sm:gap-3 mb-4 sm:mb-6 flex-shrink-0  ">
           {/* Selected Product */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="font-semibold text-[14px] sm:text-[18px] md:text-[22px] flex-shrink-0">Selected:</span>
-            <span className="text-blue-700 font-bold text-[14px] sm:text-[18px] md:text-[22px]">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Selected:</span>
+            <span className="text-blue-700 font-bold text-[18px] sm:text-[22px] md:text-[26px]">
               {selectedItem ? selectedItem.sku : "None"}
             </span>
           </div>
 
           {/* Quantity */}
-          <div className="flex items-center gap-3 sm:gap-4 ">
-            <span className="font-semibold text-[14px] sm:text-[18px] md:text-[22px] flex-shrink-0">Qty:</span>
+          <div className="flex items-center gap-4 sm:gap-5 ">
+            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Qty:</span>
             <input
               type="number"
               placeholder="Qty"
-              className="w-20 sm:w-24 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px ml-20"
+              className="w-28 sm:w-32 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               min="1"
@@ -362,12 +362,12 @@ useEffect(() => {
           </div>
 
           {/* Wholesale Price */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="font-semibold text-[14px] sm:text-[18px] md:text-[22px] flex-shrink-0">Wholesale:</span>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Wholesale:</span>
             <input
               type="number"
               placeholder="Price"
-              className="w-24 sm:w-28 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px] ml-3"
+              className="w-32 sm:w-36 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
               value={wholesalePrice}
               readOnly
               disabled
@@ -377,20 +377,20 @@ useEffect(() => {
           </div>
 
           {/* Available Stock */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="font-semibold text-[14px] sm:text-[18px] md:text-[22px] flex-shrink-0">Available Stock:</span>
-            <span className={`font-bold text-[14px] sm:text-[18px] md:text-[22px] ${availableStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Available Stock:</span>
+            <span className={`font-bold text-[18px] sm:text-[22px] md:text-[26px] ${availableStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
               {availableStock}
             </span>
           </div>
 
           {/* Selling Price */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="font-semibold text-[14px] sm:text-[18px] md:text-[22px] flex-shrink-0">Selling Price:</span>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <span className="font-semibold text-[18px] sm:text-[22px] md:text-[26px] flex-shrink-0">Selling Price:</span>
             <input
               type="number"
               placeholder="Price"
-              className="w-24 sm:w-28 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[12px] sm:text-[14px] md:text-[16px] ml-[-6px]"
+              className="w-32 sm:w-36 bg-white px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-[16px] sm:text-[18px] md:text-[20px]"
               value={sellingPrice}
               onChange={(e) => {
                 const v = e.target.value;

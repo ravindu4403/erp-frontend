@@ -5,6 +5,7 @@ import AddCustomer from "./AddCustomer";
 import CreateCustomer from "./CreateCustomer";
 import SelectProducts from "./SelectProducts";
 import SendInvoiceConfirm from "./SendInvoiceConfirm";
+import RemoveItemConfirm from "./RemoveItemConfirm";
 import type { Customer } from "../api/customers";
 import type { InvoiceItem } from "../api/items";
 import { createInvoice, addInvoiceItem, sendInvoice, getInvoiceById, cancelInvoice, updateInvoice } from "../api/invoice";
@@ -56,6 +57,8 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [removeIndex, setRemoveIndex] = useState<number | null>(null);
 
   /* ================= DATA ================= */
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -220,6 +223,27 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
 
   const handleRemoveItem = (index: number) => {
     setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
+  };
+
+  const requestRemoveItem = (index: number) => {
+    setRemoveIndex(index);
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemoveItem = () => {
+    if (removeIndex !== null) {
+      handleRemoveItem(removeIndex);
+    }
+    setShowRemoveConfirm(false);
+    setRemoveIndex(null);
+  };
+
+  const handleItemQtyChange = (index: number, value: string) => {
+    const parsed = parseInt(value || "0", 10);
+    const nextQty = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+    setInvoiceItems(prev =>
+      prev.map((it, i) => (i === index ? { ...it, qty: nextQty } : it))
+    );
   };
 
   // ✅ When starting a brand-new invoice, clear the previous 'last sent' display
@@ -640,13 +664,17 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
                     LKR {item.unitPrice.toFixed(2)}
                   </div>
                   <div className="col-span-1 flex justify-center">
-                    <span className="px-4 py-1 bg-white/10 rounded-full text-white font-mono">
-                      {item.qty}
-                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.qty}
+                      onChange={(e) => handleItemQtyChange(i, e.target.value)}
+                      className="w-24 text-center bg-white/10 rounded-full px-4 py-1 text-white font-mono outline-none focus:ring-2 focus:ring-blue-400"
+                    />
                   </div>
                   <div className="col-span-1 flex justify-center">
                     <button
-                      onClick={() => handleRemoveItem(i)}
+                      onClick={() => requestRemoveItem(i)}
                       className="px-6 py-2 bg-red-600/80 text-white rounded-full text-[20px] hover:bg-red-600 transition-colors"
                     >
                       Remove
@@ -723,6 +751,16 @@ const CreateInvoice = ({ goBack }: CreateInvoiceProps) => {
         <SendInvoiceConfirm
           onConfirm={handleSendInvoice}
           onClose={() => setShowSendConfirm(false)}
+        />
+      )}
+      {showRemoveConfirm && (
+        <RemoveItemConfirm
+          itemName={removeIndex !== null ? invoiceItems[removeIndex]?.name : ""}
+          onConfirm={confirmRemoveItem}
+          onClose={() => {
+            setShowRemoveConfirm(false);
+            setRemoveIndex(null);
+          }}
         />
       )}
     </div>
